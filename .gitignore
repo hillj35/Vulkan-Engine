@@ -31,4 +31,7 @@
 *.out
 *.app
 
+# ignore directories
 /x64
+/Debug
+
