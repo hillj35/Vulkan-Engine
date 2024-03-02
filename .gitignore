@@ -34,4 +34,6 @@
 # ignore directories
 /x64
 /Debug
+/build
 
+compile.sh

@@ -42,14 +42,16 @@ namespace lve {
 
 	class Model {
 	public:
-		Model(LveDevice& device);
+		Model(LveDevice& device, VkDescriptorSetLayout descriptorSetLayout);
 		~Model();
 
-		void bind(VkCommandBuffer cmdBuffer);
+		void bind(VkCommandBuffer cmdBuffer, VkPipelineLayout pipelineLayout, size_t currentFrame);
 		void draw(VkCommandBuffer cmdBuffer);
 		void updateUniformBuffer(UniformBufferObject uniformBuffer, uint32_t currentImage);
 	private:
 		void loadModel();
+		void createDescriptorSets(VkDescriptorSetLayout descriptorSetLayout);
+		void createDescriptorPool();
 		void createIndexBuffer();
 		void createVertexBuffer();
 		void createUniformBuffers();
@@ -60,11 +62,13 @@ namespace lve {
 		uint32_t vertexCount;
 		uint32_t indexCount;
 
+		VkDescriptorPool descriptorPool;
 		VkBuffer vertexBuffer;
 		VkDeviceMemory vertexBufferMemory;
 		VkBuffer indexBuffer;
 		VkDeviceMemory indexBufferMemory;
 
+		std::vector<VkDescriptorSet> descriptorSets;
 		std::vector<VkBuffer> uniformBuffers;
 		std::vector<VkDeviceMemory> uniformBuffersMemory;
 		std::vector<void*> uniformBuffersMapped;

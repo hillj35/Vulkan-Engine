@@ -24,7 +24,6 @@ namespace lve {
 		void run();
 
 	private:
-		void createDescriptorPool();
 		void createDescriptorSetLayout();
 		void createPipelineLayout();
 		void createPipeline();
@@ -38,7 +37,6 @@ namespace lve {
 		LveSwapChain lveSwapChain{ lveDevice, lveWindow.getExtent() };
 		std::unique_ptr<LvePipeline> lvePipeline;
 		VkPipelineLayout pipelineLayout;
-		VkDescriptorPool descriptorPool;
 		VkDescriptorSetLayout descriptorSetLayout;
 		std::vector<VkCommandBuffer> commandBuffers;
 		std::unique_ptr<Model> model;

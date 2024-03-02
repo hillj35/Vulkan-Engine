@@ -12,6 +12,7 @@
 
 namespace lve {
 	FirstApp::FirstApp() {
+		createDescriptorSetLayout();
 		loadModels();
 		createPipelineLayout();
 		createPipeline();
@@ -107,7 +108,7 @@ namespace lve {
 			vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 			lvePipeline->bind(commandBuffers[i]);
-			model->bind(commandBuffers[i]);
+			model->bind(commandBuffers[i], pipelineLayout, lveSwapChain.getCurrentFrame());
 			model->draw(commandBuffers[i]);
 			//for(std::unique_ptr<Model>& model : models) {
 			//	model->bind(commandBuffers[i]);
@@ -129,6 +130,8 @@ namespace lve {
 			throw std::runtime_error("failed to acquire swap chain image");
 		}
 
+		updateUniformBuffer(lveSwapChain.getCurrentFrame());
+
 		result = lveSwapChain.submitCommandBuffers(&commandBuffers[imageIndex], &imageIndex);
 		if (result != VK_SUCCESS) {
 			throw std::runtime_error("failed to present swap chain image");
@@ -136,7 +139,7 @@ namespace lve {
 	}
 
 	void FirstApp::loadModels() {
-		model = std::make_unique<Model>(lveDevice);
+		model = std::make_unique<Model>(lveDevice, descriptorSetLayout);
 	}
 
 	void FirstApp::updateUniformBuffer(uint32_t currentImage) {

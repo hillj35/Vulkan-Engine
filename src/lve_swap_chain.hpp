@@ -21,6 +21,7 @@ class LveSwapChain {
   LveSwapChain(const LveSwapChain &) = delete;
   void operator=(const LveSwapChain &) = delete;
 
+  size_t getCurrentFrame() { return currentFrame; }
   VkFramebuffer getFrameBuffer(int index) { return swapChainFramebuffers[index]; }
   VkRenderPass getRenderPass() { return renderPass; }
   VkImageView getImageView(int index) { return swapChainImageViews[index]; }
