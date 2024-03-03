@@ -17,6 +17,7 @@ namespace lve {
 	struct Vertex {
 		glm::vec2 pos;
 		glm::vec3 color;
+		glm::vec2 texCoord;
 
 		static VkVertexInputBindingDescription getBindingDescription() {
 			VkVertexInputBindingDescription bindingDescription{};
@@ -26,23 +27,29 @@ namespace lve {
 			return bindingDescription;
 		}
 
-		static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
-			std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+		static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions() {
+			std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
 			attributeDescriptions[0].binding = 0;
 			attributeDescriptions[0].location = 0;
 			attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
 			attributeDescriptions[0].offset = offsetof(Vertex, pos);
+
 			attributeDescriptions[1].binding = 0;
 			attributeDescriptions[1].location = 1;
 			attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
 			attributeDescriptions[1].offset = offsetof(Vertex, color);
+
+			attributeDescriptions[2].binding = 0;
+			attributeDescriptions[2].location = 2;
+			attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+			attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
 			return attributeDescriptions;
 		}
 	};
 
 	class Model {
 	public:
-		Model(LveDevice& device, VkDescriptorSetLayout descriptorSetLayout);
+		Model(LveDevice& device, VkDescriptorSetLayout descriptorSetLayout, VkImageView textureImageView, VkSampler textureSampler);
 		~Model();
 
 		void bind(VkCommandBuffer cmdBuffer, VkPipelineLayout pipelineLayout, size_t currentFrame);
@@ -50,7 +57,7 @@ namespace lve {
 		void updateUniformBuffer(UniformBufferObject uniformBuffer, uint32_t currentImage);
 	private:
 		void loadModel();
-		void createDescriptorSets(VkDescriptorSetLayout descriptorSetLayout);
+		void createDescriptorSets(VkDescriptorSetLayout descriptorSetLayout, VkImageView textureImageView, VkSampler textureSampler);
 		void createDescriptorPool();
 		void createIndexBuffer();
 		void createVertexBuffer();
