@@ -5,7 +5,7 @@ LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lX11 -lXxf86vm -lXrandr -lXi
 TARGET_EXEC = VulkanTutorial
 
 BUILD_DIR = ./build
-SRC_DIRS = ./src
+SRC_DIRS = ./src ./include
 
 SRCS := $(shell find $(SRC_DIRS) -name '*.cpp' -or -name '*.c' -or -name '*.s')
 
