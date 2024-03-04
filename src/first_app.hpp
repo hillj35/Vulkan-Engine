@@ -16,6 +16,9 @@ namespace lve {
 		static constexpr int WIDTH = 800;
 		static constexpr int HEIGHT = 600;
 
+		const std::string MODEL_PATH = "resources/models/viking_room.obj";
+		const std::string TEXTURE_PATH = "resources/textures/viking_room.png";
+
 		FirstApp();
 		~FirstApp();
 		

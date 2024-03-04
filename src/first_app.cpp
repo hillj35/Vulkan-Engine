@@ -166,7 +166,7 @@ namespace lve {
 
 	void FirstApp::createTextureImage() {
 		int texWidth, texHeight, texChannels;
-		stbi_uc* pixels = stbi_load("resources/textures/amongus.jpeg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+		stbi_uc* pixels = stbi_load(TEXTURE_PATH.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 		VkDeviceSize imageSize = texWidth * texHeight * 4;
 
 		if (!pixels) {
@@ -238,7 +238,7 @@ namespace lve {
 	}
 
 	void FirstApp::loadModels() {
-		model = std::make_unique<Model>(lveDevice, descriptorSetLayout, textureImageView, textureSampler);
+		model = std::make_unique<Model>(lveDevice, descriptorSetLayout, textureImageView, textureSampler, MODEL_PATH);
 	}
 
 	void FirstApp::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
@@ -293,7 +293,6 @@ namespace lve {
 		ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		ubo.proj = glm::perspective(glm::radians(45.0f), lveSwapChain.width() / (float)lveSwapChain.height(), 0.1f, 10.0f);
-
 		// flip Y clip coordinate
 		ubo.proj[1][1] *= -1;
 

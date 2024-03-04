@@ -3,6 +3,9 @@
 #include "lve_swap_chain.hpp"
 #include <glm/glm.hpp>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
+
 // std
 #include <vector>
 #include <array>
@@ -18,6 +21,10 @@ namespace lve {
 		glm::vec3 pos;
 		glm::vec3 color;
 		glm::vec2 texCoord;
+
+		bool operator==(const Vertex& other) const {
+			return pos == other.pos && color == other.color && texCoord == other.texCoord;
+		}
 
 		static VkVertexInputBindingDescription getBindingDescription() {
 			VkVertexInputBindingDescription bindingDescription{};
@@ -49,14 +56,14 @@ namespace lve {
 
 	class Model {
 	public:
-		Model(LveDevice& device, VkDescriptorSetLayout descriptorSetLayout, VkImageView textureImageView, VkSampler textureSampler);
+		Model(LveDevice& device, VkDescriptorSetLayout descriptorSetLayout, VkImageView textureImageView, VkSampler textureSampler, std::string modelPath);
 		~Model();
 
 		void bind(VkCommandBuffer cmdBuffer, VkPipelineLayout pipelineLayout, size_t currentFrame);
 		void draw(VkCommandBuffer cmdBuffer);
 		void updateUniformBuffer(UniformBufferObject uniformBuffer, uint32_t currentImage);
 	private:
-		void loadModel();
+		void loadModel(std::string modelPath);
 		void createDescriptorSets(VkDescriptorSetLayout descriptorSetLayout, VkImageView textureImageView, VkSampler textureSampler);
 		void createDescriptorPool();
 		void createIndexBuffer();
@@ -65,7 +72,7 @@ namespace lve {
 
 		LveDevice& lveDevice;
 		std::vector<Vertex> vertices;
-		std::vector<uint16_t> indices;
+		std::vector<uint32_t> indices;
 		uint32_t vertexCount;
 		uint32_t indexCount;
 
@@ -79,5 +86,15 @@ namespace lve {
 		std::vector<VkBuffer> uniformBuffers;
 		std::vector<VkDeviceMemory> uniformBuffersMemory;
 		std::vector<void*> uniformBuffersMapped;
+	};
+}
+
+namespace std {
+	template<> struct hash<lve::Vertex> {
+		size_t operator()(lve::Vertex const& vertex) const {
+			return ((hash<glm::vec3>()(vertex.pos) ^
+                   (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
+                   (hash<glm::vec2>()(vertex.texCoord) << 1);
+		}
 	};
 }
