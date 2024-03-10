@@ -5,7 +5,7 @@
 #include <stdexcept>
 
 namespace init {
-    void createPipelines(VkDevice device, lve::LveSwapChain* swapChain, ApplicationPipelines* outPipelines) {
+    void createPipelines(VkDevice device, lve::LveSwapChain* swapChain, lve::ApplicationPipelines* outPipelines) {
         // opaque pipeline
         // descriptor sets
         VkDescriptorSetLayoutBinding uboLayoutBinding{};

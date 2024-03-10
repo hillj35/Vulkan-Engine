@@ -2,30 +2,8 @@
 
 #include "../lve_swap_chain.hpp"
 #include "../pipeline_builder.hpp"
+#include "../lve_types.hpp"
 
 namespace init {
-    struct Pipeline {
-        ~Pipeline() {
-            vkDestroyPipeline(device, pipeline, nullptr);
-            vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-            vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
-
-            for (VkShaderModule shader : shaderModules) {
-                vkDestroyShaderModule(device, shader, nullptr);
-            }
-        }
-
-        VkPipeline pipeline;
-        VkPipelineLayout pipelineLayout;
-        std::vector<VkShaderModule> shaderModules;
-        VkDescriptorSetLayout descriptorSetLayout;
-        VkDevice device; 
-    };
-    
-    struct ApplicationPipelines {
-        Pipeline opaquePipeline;
-        // todo: Pipeline transparentPipeline;
-    };
-
-    void createPipelines(VkDevice device, lve::LveSwapChain* swapChain, ApplicationPipelines* outPipelines);
+    void createPipelines(VkDevice device, lve::LveSwapChain* swapChain, lve::ApplicationPipelines* outPipelines);
 }
