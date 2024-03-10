@@ -1,5 +1,4 @@
 #include "first_app.hpp"
-#include "pipeline_builder.hpp"
 
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
@@ -15,21 +14,15 @@
 
 namespace lve {
 	FirstApp::FirstApp() {
-		createDescriptorSetLayout();
 		createTextureImage();
 		createTextureImageView();
 		createTextureSampler();
+		init::createPipelines(lveDevice.device(), &lveSwapChain, &applicationPipelines);
 		loadModels();
-		createPipelineLayout();
-		createPipeline();
 		createCommandBuffers();
 	}
 
 	FirstApp::~FirstApp() {
-		vkDestroyPipelineLayout(lveDevice.device(), pipelineLayout, nullptr);
-		vkDestroyPipeline(lveDevice.device(), pipeline, nullptr);
-		vkDestroyDescriptorSetLayout(lveDevice.device(), descriptorSetLayout, nullptr);
-
 		vkDestroySampler(lveDevice.device(), textureSampler, nullptr);
 		vkDestroyImageView(lveDevice.device(), textureImageView, nullptr);
 
@@ -44,33 +37,6 @@ namespace lve {
 		}
 
 		vkDeviceWaitIdle(lveDevice.device());
-	}
-
-	void FirstApp::createDescriptorSetLayout() {
-		VkDescriptorSetLayoutBinding uboLayoutBinding{};
-		uboLayoutBinding.binding = 0;
-		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		uboLayoutBinding.descriptorCount = 1;
-		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-		uboLayoutBinding.pImmutableSamplers = nullptr;
-
-		VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-		samplerLayoutBinding.binding = 1;
-		samplerLayoutBinding.descriptorCount = 1;
-		samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		samplerLayoutBinding.pImmutableSamplers = nullptr;
-		samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-		std::array<VkDescriptorSetLayoutBinding, 2> bindings = {uboLayoutBinding, samplerLayoutBinding};
-
-		VkDescriptorSetLayoutCreateInfo layoutInfo{};
-		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-		layoutInfo.pBindings = bindings.data();
-
-		if (vkCreateDescriptorSetLayout(lveDevice.device(), &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create descriptor set layout!");
-		}
 	}
 
 	void FirstApp::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, 
@@ -93,38 +59,6 @@ namespace lve {
 		imageInfo.flags = 0;
 
 		lveDevice.createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
-	}
-
-	void FirstApp::createPipelineLayout() {
-		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = 1;
-		pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
-		pipelineLayoutInfo.pushConstantRangeCount = 0;
-		pipelineLayoutInfo.pPushConstantRanges = nullptr;
-		if (vkCreatePipelineLayout(lveDevice.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create pipeline layout!");
-		}
-	}
-
-	void FirstApp::createPipeline() {
-		PipelineBuilder pipelineBuilder;
-
-		pipelineBuilder.pipelineLayout = pipelineLayout;
-		pipelineBuilder.setShaders(
-			PipelineBuilder::createShaderModule(lveDevice.device(), "shaders/simple_shader.vert.spv"),
-			PipelineBuilder::createShaderModule(lveDevice.device(), "shaders/simple_shader.frag.spv")
-		);
-		pipelineBuilder.setInputTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-		pipelineBuilder.setPolygonMode(VK_POLYGON_MODE_FILL);
-		pipelineBuilder.setCullMode(VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
-		pipelineBuilder.setMultisamplingNone();
-		pipelineBuilder.disableBlending();
-		pipelineBuilder.enableDepthTest();
-		pipelineBuilder.setColorAttachmentFormat(lveSwapChain.getSwapChainImageFormat());
-		pipelineBuilder.setDepthFormat(lveSwapChain.getSwapChainDepthFormat());
-
-		pipeline = pipelineBuilder.buildPipeline(lveDevice.device());
 	}
 
 	void FirstApp::createCommandBuffers() {
@@ -170,7 +104,7 @@ namespace lve {
 			renderingInfo.pDepthAttachment = &depthAttachment;
 			renderingInfo.pStencilAttachment = nullptr;
 			vkCmdBeginRendering(commandBuffers[i], &renderingInfo);
-			vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+			vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, applicationPipelines.opaquePipeline.pipeline);
 
 			VkViewport viewport = {};
 			viewport.x = 0;
@@ -190,7 +124,7 @@ namespace lve {
 
 			vkCmdSetScissor(commandBuffers[i], 0, 1, &scissor);
 
-			model->bind(commandBuffers[i], pipelineLayout, lveSwapChain.getCurrentFrame());
+			model->bind(commandBuffers[i], applicationPipelines.opaquePipeline.pipelineLayout, lveSwapChain.getCurrentFrame());
 			model->draw(commandBuffers[i]);
 			vkCmdEndRendering(commandBuffers[i]);
 
@@ -276,7 +210,7 @@ namespace lve {
 	}
 
 	void FirstApp::loadModels() {
-		model = std::make_unique<Model>(lveDevice, descriptorSetLayout, textureImageView, textureSampler, MODEL_PATH);
+		model = std::make_unique<Model>(lveDevice, applicationPipelines.opaquePipeline.descriptorSetLayout, textureImageView, textureSampler, MODEL_PATH);
 	}
 
 	void FirstApp::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {

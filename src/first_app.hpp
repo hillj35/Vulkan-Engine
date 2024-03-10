@@ -5,6 +5,7 @@
 #include "lve_device.hpp"
 #include "lve_swap_chain.hpp"
 #include "model.hpp"
+#include "initializers/pipelines.hpp"
 
 // std
 #include <memory>
@@ -28,7 +29,6 @@ namespace lve {
 
 	private:
 		void createCommandBuffers();
-		void createDescriptorSetLayout();
 		void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, 
 			VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 		void createPipelineLayout();
@@ -44,14 +44,13 @@ namespace lve {
 		LveWindow lveWindow{ WIDTH, HEIGHT, "Hello Vulkan!" };
 		LveDevice lveDevice{ lveWindow };
 		LveSwapChain lveSwapChain{ lveDevice, lveWindow.getExtent() };
-		VkPipelineLayout pipelineLayout;
-		VkDescriptorSetLayout descriptorSetLayout;
 		VkImage textureImage;
 		VkImageView textureImageView;
-		VkPipeline pipeline;
 		VkSampler textureSampler;
 		VkDeviceMemory textureImageMemory;
 		std::vector<VkCommandBuffer> commandBuffers;
 		std::unique_ptr<Model> model;
+
+		init::ApplicationPipelines applicationPipelines;
 	};
 }
