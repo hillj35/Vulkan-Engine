@@ -1,7 +1,6 @@
 #pragma once
 
 #include "lve_window.hpp"
-#include "lve_pipeline.hpp"
 #include "lve_device.hpp"
 #include "lve_swap_chain.hpp"
 #include "model.hpp"
