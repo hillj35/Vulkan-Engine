@@ -44,11 +44,11 @@ namespace lve {
 		LveWindow lveWindow{ WIDTH, HEIGHT, "Hello Vulkan!" };
 		LveDevice lveDevice{ lveWindow };
 		LveSwapChain lveSwapChain{ lveDevice, lveWindow.getExtent() };
-		std::unique_ptr<LvePipeline> lvePipeline;
 		VkPipelineLayout pipelineLayout;
 		VkDescriptorSetLayout descriptorSetLayout;
 		VkImage textureImage;
 		VkImageView textureImageView;
+		VkPipeline pipeline;
 		VkSampler textureSampler;
 		VkDeviceMemory textureImageMemory;
 		std::vector<VkCommandBuffer> commandBuffers;

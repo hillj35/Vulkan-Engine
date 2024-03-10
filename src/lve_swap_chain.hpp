@@ -25,7 +25,11 @@ class LveSwapChain {
   VkFramebuffer getFrameBuffer(int index) { return swapChainFramebuffers[index]; }
   VkRenderPass getRenderPass() { return renderPass; }
   VkImageView getImageView(int index) { return swapChainImageViews[index]; }
+  VkImage getImage(int index) { return swapChainImages[index]; }
+  VkImageView getDepthImageView(int index) { return depthImageViews[index]; }
+  VkImage getDepthImage(int index) { return depthImages[index]; }
   size_t imageCount() { return swapChainImages.size(); }
+  VkFormat getSwapChainDepthFormat() { return swapChainDepthFormat; }
   VkFormat getSwapChainImageFormat() { return swapChainImageFormat; }
   VkExtent2D getSwapChainExtent() { return swapChainExtent; }
   uint32_t width() { return swapChainExtent.width; }
@@ -55,6 +59,7 @@ class LveSwapChain {
   VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);
 
   VkFormat swapChainImageFormat;
+  VkFormat swapChainDepthFormat;
   VkExtent2D swapChainExtent;
 
   std::vector<VkFramebuffer> swapChainFramebuffers;

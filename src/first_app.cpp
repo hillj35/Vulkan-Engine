@@ -1,4 +1,5 @@
 #include "first_app.hpp"
+#include "pipeline_builder.hpp"
 
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
@@ -26,6 +27,7 @@ namespace lve {
 
 	FirstApp::~FirstApp() {
 		vkDestroyPipelineLayout(lveDevice.device(), pipelineLayout, nullptr);
+		vkDestroyPipeline(lveDevice.device(), pipeline, nullptr);
 		vkDestroyDescriptorSetLayout(lveDevice.device(), descriptorSetLayout, nullptr);
 
 		vkDestroySampler(lveDevice.device(), textureSampler, nullptr);
@@ -106,10 +108,23 @@ namespace lve {
 	}
 
 	void FirstApp::createPipeline() {
-		auto pipelineConfig = LvePipeline::defaultPipelineConfigInfo(lveSwapChain.width(), lveSwapChain.height());
-		pipelineConfig.renderPass = lveSwapChain.getRenderPass();
-		pipelineConfig.pipelineLayout = pipelineLayout;
-		lvePipeline = std::make_unique<LvePipeline>(lveDevice, "shaders/simple_shader.vert.spv", "shaders/simple_shader.frag.spv", pipelineConfig);
+		PipelineBuilder pipelineBuilder;
+
+		pipelineBuilder.pipelineLayout = pipelineLayout;
+		pipelineBuilder.setShaders(
+			PipelineBuilder::createShaderModule(lveDevice.device(), "shaders/simple_shader.vert.spv"),
+			PipelineBuilder::createShaderModule(lveDevice.device(), "shaders/simple_shader.frag.spv")
+		);
+		pipelineBuilder.setInputTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+		pipelineBuilder.setPolygonMode(VK_POLYGON_MODE_FILL);
+		pipelineBuilder.setCullMode(VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+		pipelineBuilder.setMultisamplingNone();
+		pipelineBuilder.disableBlending();
+		pipelineBuilder.enableDepthTest();
+		pipelineBuilder.setColorAttachmentFormat(lveSwapChain.getSwapChainImageFormat());
+		pipelineBuilder.setDepthFormat(lveSwapChain.getSwapChainDepthFormat());
+
+		pipeline = pipelineBuilder.buildPipeline(lveDevice.device());
 	}
 
 	void FirstApp::createCommandBuffers() {
@@ -133,31 +148,54 @@ namespace lve {
 				throw std::runtime_error("failed to begin recording command buffer");
 			}
 
-			VkRenderPassBeginInfo renderPassInfo{};
-			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = lveSwapChain.getRenderPass();
-			renderPassInfo.framebuffer = lveSwapChain.getFrameBuffer(i);
+			VkRenderingAttachmentInfo colorAttachment { .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
+			colorAttachment.imageView = lveSwapChain.getImageView(i);
+			colorAttachment.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+			colorAttachment.clearValue = { 0.1f, 0.1f, 0.1f, 1.0f };
+			colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 
-			renderPassInfo.renderArea.offset = { 0,0 };
-			renderPassInfo.renderArea.extent = lveSwapChain.getSwapChainExtent();
+			VkRenderingAttachmentInfo depthAttachment { .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
+			depthAttachment.imageView = lveSwapChain.getDepthImageView(i);
+			depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+			depthAttachment.clearValue.depthStencil = { 1.0f, 0 };
+			depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 
-			std::array<VkClearValue, 2> clearValues{};
-			clearValues[0].color = { 0.1f, 0.1f, 0.1f, 1.0f };
-			clearValues[1].depthStencil = { 1.0f, 0 };
-			renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-			renderPassInfo.pClearValues = clearValues.data();
+			VkRenderingInfo renderingInfo { .sType = VK_STRUCTURE_TYPE_RENDERING_INFO };
+			renderingInfo.renderArea = VkRect2D { VkOffset2D {0, 0}, lveSwapChain.getSwapChainExtent()};
+			renderingInfo.layerCount = 1;
+			renderingInfo.colorAttachmentCount = 1;
+			renderingInfo.pColorAttachments = &colorAttachment;
+			renderingInfo.pDepthAttachment = &depthAttachment;
+			renderingInfo.pStencilAttachment = nullptr;
+			vkCmdBeginRendering(commandBuffers[i], &renderingInfo);
+			vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-			vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+			VkViewport viewport = {};
+			viewport.x = 0;
+			viewport.y = 0;
+			viewport.width = lveSwapChain.getSwapChainExtent().width;
+			viewport.height = lveSwapChain.getSwapChainExtent().height;
+			viewport.minDepth = 0.0f;
+			viewport.maxDepth = 1.0f;
 
-			lvePipeline->bind(commandBuffers[i]);
+			vkCmdSetViewport(commandBuffers[i], 0, 1, &viewport);
+
+			VkRect2D scissor = {};
+			scissor.offset.x = 0;
+			scissor.offset.y = 0;
+			scissor.extent.width = lveSwapChain.getSwapChainExtent().width;
+			scissor.extent.height = lveSwapChain.getSwapChainExtent().height;
+
+			vkCmdSetScissor(commandBuffers[i], 0, 1, &scissor);
+
 			model->bind(commandBuffers[i], pipelineLayout, lveSwapChain.getCurrentFrame());
 			model->draw(commandBuffers[i]);
-			//for(std::unique_ptr<Model>& model : models) {
-			//	model->bind(commandBuffers[i]);
-			//	model->draw(commandBuffers[i]);
-			//}
-			
-			vkCmdEndRenderPass(commandBuffers[i]);
+			vkCmdEndRendering(commandBuffers[i]);
+
+			transitionImageLayout(lveSwapChain.getImage(i), lveSwapChain.getSwapChainImageFormat(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
 			if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
 				throw std::runtime_error("failed to record command buffer");
 			}
@@ -275,7 +313,11 @@ namespace lve {
 			sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		} else {
-			throw std::invalid_argument("unsupported layout transition!");
+			barrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
+			barrier.dstAccessMask = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
+
+			sourceStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+			destinationStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
 		}
 
 		vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
