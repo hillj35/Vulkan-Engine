@@ -4,9 +4,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
 #include "initializers/pipelines.hpp"
 #include "initializers/images.hpp"
 #include "utility/images.hpp"
@@ -18,7 +15,7 @@
 
 namespace lve {
 	FirstApp::FirstApp() {
-		createTextureImage();
+		createTextureImages();
 		init::createImageSampler(lveDevice.device(), lveDevice.properties.limits.maxSamplerAnisotropy, textureSampler);
 		init::createPipelines(lveDevice.device(), &lveSwapChain, &applicationPipelines);
 		loadModels();
@@ -28,6 +25,7 @@ namespace lve {
 	FirstApp::~FirstApp() {
 		vkDestroySampler(lveDevice.device(), textureSampler, nullptr);
 		destroyImage(lveDevice.device(), textureImage);
+		destroyImage(lveDevice.device(), cubeTextureImage);
 	}
 
 	void FirstApp::run() {
@@ -104,6 +102,8 @@ namespace lve {
 
 			model->bind(commandBuffers[i], applicationPipelines.opaquePipeline.pipelineLayout, lveSwapChain.getCurrentFrame());
 			model->draw(commandBuffers[i]);
+			cubeModel->bind(commandBuffers[i], applicationPipelines.opaquePipeline.pipelineLayout, lveSwapChain.getCurrentFrame());
+			cubeModel->draw(commandBuffers[i]);
 			vkCmdEndRendering(commandBuffers[i]);
 
 			util::transitionImageLayout(commandBuffers[i], lveSwapChain.getImage(i), lveSwapChain.getSwapChainImageFormat(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
@@ -114,38 +114,9 @@ namespace lve {
 		}
 	}
 
-	void FirstApp::createTextureImage() {
-		int texWidth, texHeight, texChannels;
-		stbi_uc* pixels = stbi_load(TEXTURE_PATH.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-		VkDeviceSize imageSize = texWidth * texHeight * 4;
-
-		if (!pixels) {
-			throw std::runtime_error("failed to load texture image");
-		}
-
-		VkBuffer stagingBuffer;
-		VkDeviceMemory stagingBufferMemory;
-
-		lveDevice.createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-
-		void* data; 
-		vkMapMemory(lveDevice.device(), stagingBufferMemory, 0, imageSize, 0, &data);
-		memcpy(data, pixels, static_cast<size_t>(imageSize));
-		vkUnmapMemory(lveDevice.device(), stagingBufferMemory);
-		stbi_image_free(pixels);
-
-		VkCommandBuffer commandBuffer = lveDevice.beginSingleTimeCommands();
-		init::createImage(&lveDevice, texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage);
-		util::transitionImageLayout(commandBuffer, textureImage.image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-		lveDevice.endSingleTimeCommands(commandBuffer);
-
-		lveDevice.copyBufferToImage(stagingBuffer, textureImage.image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1);
-		commandBuffer = lveDevice.beginSingleTimeCommands();
-		util::transitionImageLayout(commandBuffer, textureImage.image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		lveDevice.endSingleTimeCommands(commandBuffer);
-
-		vkDestroyBuffer(lveDevice.device(), stagingBuffer, nullptr);
-		vkFreeMemory(lveDevice.device(), stagingBufferMemory, nullptr);
+	void FirstApp::createTextureImages() {
+		util::loadTextureImage(&lveDevice, TEXTURE_PATH, textureImage);
+		util::loadTextureImage(&lveDevice, CUBE_TEXTURE_PATH, cubeTextureImage);
 	}
 
 	void FirstApp::drawFrame() {
@@ -166,6 +137,7 @@ namespace lve {
 
 	void FirstApp::loadModels() {
 		model = std::make_unique<Model>(lveDevice, applicationPipelines.opaquePipeline.descriptorSetLayout, textureImage.view, textureSampler, MODEL_PATH);
+		cubeModel = std::make_unique<Model>(lveDevice, applicationPipelines.opaquePipeline.descriptorSetLayout, cubeTextureImage.view, textureSampler, CUBE_MODEL_PATH);
 	}
 
 	void FirstApp::updateUniformBuffer(uint32_t currentImage) {
@@ -182,5 +154,8 @@ namespace lve {
 		ubo.proj[1][1] *= -1;
 
 		model->updateUniformBuffer(ubo, currentImage);
+
+		ubo.model = glm::scale(ubo.model, glm::vec3(0.5f));
+		cubeModel->updateUniformBuffer(ubo, currentImage);
 	}
 }

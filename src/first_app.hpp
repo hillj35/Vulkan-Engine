@@ -18,6 +18,8 @@ namespace lve {
 
 		const std::string MODEL_PATH = "resources/models/viking_room.obj";
 		const std::string TEXTURE_PATH = "resources/textures/viking_room.png";
+		const std::string CUBE_MODEL_PATH = "resources/models/cube.obj";
+		const std::string CUBE_TEXTURE_PATH = "resources/textures/white.png";
 
 		FirstApp();
 		~FirstApp();
@@ -28,7 +30,7 @@ namespace lve {
 
 	private:
 		void createCommandBuffers();
-		void createTextureImage();
+		void createTextureImages();
 		void drawFrame();
 		void loadModels();
 		void updateUniformBuffer(uint32_t currentImage);
@@ -38,9 +40,11 @@ namespace lve {
 		LveSwapChain lveSwapChain{ lveDevice, lveWindow.getExtent() };
 		std::vector<VkCommandBuffer> commandBuffers;
 		std::unique_ptr<Model> model;
+		std::unique_ptr<Model> cubeModel;
 
 		ApplicationPipelines applicationPipelines;
 		AllocatedImage textureImage;
+		AllocatedImage cubeTextureImage;
 		VkSampler textureSampler;
 	};
 }

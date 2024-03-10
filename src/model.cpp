@@ -90,6 +90,7 @@ namespace lve {
 			descriptorWrites[1].pImageInfo = &imageInfo;
 
 			vkUpdateDescriptorSets(lveDevice.device(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+			isTextured = true;
 		}
 	}
 

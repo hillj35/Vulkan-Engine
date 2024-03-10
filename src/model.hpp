@@ -70,6 +70,7 @@ namespace lve {
 		void createVertexBuffer();
 		void createUniformBuffers();
 
+		bool isTextured = false;
 		LveDevice& lveDevice;
 		std::vector<Vertex> vertices;
 		std::vector<uint32_t> indices;
