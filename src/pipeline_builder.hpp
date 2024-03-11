@@ -28,6 +28,7 @@ namespace lve {
         void setCullMode(VkCullModeFlags cullMode, VkFrontFace frontFace);
         void setMultisamplingNone();
         void disableBlending();
+        void enableBlending();
         void setColorAttachmentFormat(VkFormat format);
         void setDepthFormat(VkFormat format);
         void disableDepthTest();

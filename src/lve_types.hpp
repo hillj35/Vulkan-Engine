@@ -13,27 +13,18 @@ namespace lve {
     };
 
     struct Pipeline {
-        ~Pipeline() {
-            vkDestroyPipeline(device, pipeline, nullptr);
-            vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-            vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
-
-            for (VkShaderModule shader : shaderModules) {
-                vkDestroyShaderModule(device, shader, nullptr);
-            }
-        }
-
         VkPipeline pipeline;
-        VkPipelineLayout pipelineLayout;
+        VkPipelineLayout layout;
         std::vector<VkShaderModule> shaderModules;
         VkDescriptorSetLayout descriptorSetLayout;
-        VkDevice device; 
     };
     
     struct ApplicationPipelines {
         Pipeline opaquePipeline;
-        // todo: Pipeline transparentPipeline;
+        Pipeline transparentPipeline;
     };
 
     void destroyImage(VkDevice device, const AllocatedImage& img);
+    void destroyApplicationPipelines(VkDevice device, const ApplicationPipelines& pipelines);
+    void destroyPipeline(VkDevice device, const Pipeline& pipeline);
 }

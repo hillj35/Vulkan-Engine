@@ -63,10 +63,17 @@ namespace init {
 		pipelineBuilder.setDepthFormat(swapChain->getSwapChainDepthFormat());
 
 		outPipelines->opaquePipeline.pipeline = pipelineBuilder.buildPipeline(device);
-        outPipelines->opaquePipeline.pipelineLayout = pipelineLayout;
+        outPipelines->opaquePipeline.layout = pipelineLayout;
 		outPipelines->opaquePipeline.descriptorSetLayout = descriptorSetLayout;
 		outPipelines->opaquePipeline.shaderModules = { vertShaderModule, fragShaderModule };
-		outPipelines->opaquePipeline.device = device;
-        // todo: transparent pipeline
+        
+		// transparent pipeline
+		pipelineBuilder.setCullMode(VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+		pipelineBuilder.enableBlending();
+		pipelineBuilder.disableDepthTest();
+		outPipelines->transparentPipeline.pipeline = pipelineBuilder.buildPipeline(device);
+		outPipelines->transparentPipeline.layout = pipelineLayout;
+		outPipelines->transparentPipeline.descriptorSetLayout = descriptorSetLayout;
+		outPipelines->transparentPipeline.shaderModules = { vertShaderModule, fragShaderModule };
     }
 }

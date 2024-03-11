@@ -26,6 +26,7 @@ namespace lve {
 		vkDestroySampler(lveDevice.device(), textureSampler, nullptr);
 		destroyImage(lveDevice.device(), textureImage);
 		destroyImage(lveDevice.device(), cubeTextureImage);
+		destroyApplicationPipelines(lveDevice.device(), applicationPipelines);
 	}
 
 	void FirstApp::run() {
@@ -100,9 +101,11 @@ namespace lve {
 
 			vkCmdSetScissor(commandBuffers[i], 0, 1, &scissor);
 
-			model->bind(commandBuffers[i], applicationPipelines.opaquePipeline.pipelineLayout, lveSwapChain.getCurrentFrame());
+			model->bind(commandBuffers[i], applicationPipelines.opaquePipeline.layout, lveSwapChain.getCurrentFrame());
 			model->draw(commandBuffers[i]);
-			cubeModel->bind(commandBuffers[i], applicationPipelines.opaquePipeline.pipelineLayout, lveSwapChain.getCurrentFrame());
+
+			vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, applicationPipelines.transparentPipeline.pipeline);
+			cubeModel->bind(commandBuffers[i], applicationPipelines.transparentPipeline.layout, lveSwapChain.getCurrentFrame());
 			cubeModel->draw(commandBuffers[i]);
 			vkCmdEndRendering(commandBuffers[i]);
 
@@ -150,12 +153,14 @@ namespace lve {
 		ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		ubo.proj = glm::perspective(glm::radians(45.0f), lveSwapChain.width() / (float)lveSwapChain.height(), 0.1f, 10.0f);
+		ubo.color = glm::vec4(1.0f);
 		// flip Y clip coordinate
 		ubo.proj[1][1] *= -1;
 
 		model->updateUniformBuffer(ubo, currentImage);
 
-		ubo.model = glm::scale(ubo.model, glm::vec3(0.5f));
+		ubo.model = glm::scale(glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f)), glm::vec3(0.5f));
+		ubo.color = glm::vec4(1.0f, 1.0f, 0.0f, 0.5f);
 		cubeModel->updateUniformBuffer(ubo, currentImage);
 	}
 }
