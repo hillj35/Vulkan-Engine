@@ -12,6 +12,7 @@ namespace lve {
 
     LveGui::~LveGui() {
         ImGui_ImplVulkan_Shutdown();
+        vkDestroyDescriptorPool(device.device(), imguiPool, nullptr);
     }
 
     void LveGui::init() {
@@ -33,7 +34,6 @@ namespace lve {
         poolInfo.poolSizeCount = (uint32_t)std::size(poolSizes);
         poolInfo.pPoolSizes = poolSizes;
 
-        VkDescriptorPool imguiPool;
         if (vkCreateDescriptorPool(device.device(), &poolInfo, nullptr, &imguiPool) != VK_SUCCESS) {
             throw std::runtime_error("failed to create imgui descriptor pool");
         }

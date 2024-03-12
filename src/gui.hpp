@@ -20,5 +20,6 @@ namespace lve {
             LveDevice& device;
             LveSwapChain& swapChain;
             LveWindow& window;
+            VkDescriptorPool imguiPool;
     };
 }

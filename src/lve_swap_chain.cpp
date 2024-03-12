@@ -51,6 +51,8 @@ LveSwapChain::~LveSwapChain() {
     vkDestroySemaphore(device.device(), imageAvailableSemaphores[i], nullptr);
     vkDestroyFence(device.device(), inFlightFences[i], nullptr);
   }
+
+  vkDestroyFence(device.device(), immFence, nullptr);
 }
 
 VkResult LveSwapChain::acquireNextImage(uint32_t *imageIndex) {

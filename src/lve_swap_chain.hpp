@@ -86,8 +86,6 @@ class LveSwapChain {
   size_t currentFrame = 0;
 
   VkFence immFence;
-  VkCommandBuffer immCommandBuffer;
-  VkCommandPool immCommandPool;
 };
 
 }  // namespace lve
