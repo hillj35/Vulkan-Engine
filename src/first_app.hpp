@@ -14,8 +14,8 @@
 namespace lve {
 	class FirstApp {
 	public:
-		static constexpr int WIDTH = 800;
-		static constexpr int HEIGHT = 600;
+		static constexpr int WIDTH = 1600;
+		static constexpr int HEIGHT = 900;
 
 		const std::string MODEL_PATH = "resources/models/viking_room.obj";
 		const std::string TEXTURE_PATH = "resources/textures/viking_room.png";
