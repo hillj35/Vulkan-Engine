@@ -1,4 +1,6 @@
 #include "pipelines.hpp"
+#include "initializers.hpp"
+#include "../lve_types.hpp"
 
 #include <vector>
 #include <array>
@@ -39,8 +41,11 @@ namespace init {
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutInfo.setLayoutCount = 1;
 		pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
-		pipelineLayoutInfo.pushConstantRangeCount = 0;
-		pipelineLayoutInfo.pPushConstantRanges = nullptr;
+
+		// push constants
+		VkPushConstantRange pushConstant = pushConstants<lve::TransparentPushConstants>(VK_SHADER_STAGE_VERTEX_BIT);
+		pipelineLayoutInfo.pushConstantRangeCount = 1;
+		pipelineLayoutInfo.pPushConstantRanges = &pushConstant;
 
         VkPipelineLayout pipelineLayout;
 		if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
@@ -68,6 +73,7 @@ namespace init {
 		outPipelines->opaquePipeline.shaderModules = { vertShaderModule, fragShaderModule };
         
 		// transparent pipeline
+		pipelineBuilder.pipelineLayout = pipelineLayout;
 		pipelineBuilder.setCullMode(VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE);
 		pipelineBuilder.enableBlending();
 		pipelineBuilder.disableDepthTest();

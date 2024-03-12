@@ -8,6 +8,7 @@
 // std lib headers
 #include <string>
 #include <vector>
+#include <functional>
 
 namespace lve {
 
@@ -42,6 +43,8 @@ class LveSwapChain {
 
   VkResult acquireNextImage(uint32_t *imageIndex);
   VkResult submitCommandBuffers(const VkCommandBuffer *buffers, uint32_t *imageIndex);
+  void waitForFrameFence(uint32_t *imageIndex);
+  void immediateSubmitCommandBuffers(const VkCommandBuffer buffer, std::function<void(VkCommandBuffer cmd)>&& function);
 
  private:
   void createSwapChain();
@@ -81,6 +84,10 @@ class LveSwapChain {
   std::vector<VkFence> inFlightFences;
   std::vector<VkFence> imagesInFlight;
   size_t currentFrame = 0;
+
+  VkFence immFence;
+  VkCommandBuffer immCommandBuffer;
+  VkCommandPool immCommandPool;
 };
 
 }  // namespace lve

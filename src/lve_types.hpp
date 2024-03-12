@@ -1,7 +1,7 @@
 #pragma once
 
-// vulkan headers
 #include <vulkan/vulkan.h>
+#include <glm/glm.hpp>
 
 #include <vector>
 
@@ -22,6 +22,11 @@ namespace lve {
     struct ApplicationPipelines {
         Pipeline opaquePipeline;
         Pipeline transparentPipeline;
+    };
+
+    struct TransparentPushConstants {
+        glm::mat4 transform;
+        glm::vec4 color;
     };
 
     void destroyImage(VkDevice device, const AllocatedImage& img);

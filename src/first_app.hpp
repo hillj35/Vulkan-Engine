@@ -3,6 +3,7 @@
 #include "lve_window.hpp"
 #include "lve_device.hpp"
 #include "lve_swap_chain.hpp"
+#include "gui.hpp"
 #include "model.hpp"
 #include "lve_types.hpp"
 
@@ -38,6 +39,7 @@ namespace lve {
 		LveWindow lveWindow{ WIDTH, HEIGHT, "Hello Vulkan!" };
 		LveDevice lveDevice{ lveWindow };
 		LveSwapChain lveSwapChain{ lveDevice, lveWindow.getExtent() };
+		LveGui lveGui { lveDevice, lveSwapChain, lveWindow };
 		std::vector<VkCommandBuffer> commandBuffers;
 		std::unique_ptr<Model> model;
 		std::unique_ptr<Model> cubeModel;
@@ -46,5 +48,6 @@ namespace lve {
 		AllocatedImage textureImage;
 		AllocatedImage cubeTextureImage;
 		VkSampler textureSampler;
+		TransparentPushConstants cubePushConstants{};
 	};
 }

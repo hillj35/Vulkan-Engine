@@ -4,7 +4,8 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/include/stb"
+                "${workspaceFolder}/include/stb",
+                "${workspaceFolder}/include/imgui"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

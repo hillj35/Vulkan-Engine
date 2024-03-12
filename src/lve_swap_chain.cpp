@@ -1,4 +1,5 @@
 #include "lve_swap_chain.hpp"
+#include "initializers/initializers.hpp"
 
 // std
 #include <array>
@@ -73,9 +74,9 @@ VkResult LveSwapChain::acquireNextImage(uint32_t *imageIndex) {
 
 VkResult LveSwapChain::submitCommandBuffers(
     const VkCommandBuffer *buffers, uint32_t *imageIndex) {
-  if (imagesInFlight[*imageIndex] != VK_NULL_HANDLE) {
+  /*if (imagesInFlight[*imageIndex] != VK_NULL_HANDLE) {
     vkWaitForFences(device.device(), 1, &imagesInFlight[*imageIndex], VK_TRUE, UINT64_MAX);
-  }
+  }*/
   imagesInFlight[*imageIndex] = inFlightFences[currentFrame];
 
   VkSubmitInfo submitInfo = {};
@@ -117,6 +118,44 @@ VkResult LveSwapChain::submitCommandBuffers(
   currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
   return result;
+}
+
+void LveSwapChain::waitForFrameFence(uint32_t *imageIndex) {
+    if (imagesInFlight[*imageIndex] != VK_NULL_HANDLE) {
+      vkWaitForFences(device.device(), 1, &imagesInFlight[*imageIndex], VK_TRUE, UINT64_MAX);
+    }
+  }
+
+void LveSwapChain::immediateSubmitCommandBuffers(const VkCommandBuffer buffer, std::function<void(VkCommandBuffer cmd)>&& function) {
+  if (vkResetFences(device.device(), 1, &immFence) != VK_SUCCESS) {
+    throw std::runtime_error("failed to reset immFence");
+  }
+  if (vkResetCommandBuffer(buffer, 0) != VK_SUCCESS) {
+    throw std::runtime_error("failed to reset immediate command buffer");
+  }
+
+  VkCommandBufferBeginInfo beginInfo = init::commandBufferBeginInfo(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+  if (vkBeginCommandBuffer(buffer, &beginInfo) != VK_SUCCESS) {
+    throw std::runtime_error("failed to begin recording command buffer");
+  }
+  
+  function(buffer);
+
+  if (vkEndCommandBuffer(buffer) != VK_SUCCESS) {
+    throw std::runtime_error("failed to record command buffer");
+  }
+
+  VkCommandBufferSubmitInfo cmdInfo = init::commandBufferSubmitInfo(buffer);
+  VkSubmitInfo2 submit = init::submitInfo(&cmdInfo, nullptr, nullptr);
+
+  if (vkQueueSubmit2(device.graphicsQueue(), 1, &submit, immFence) != VK_SUCCESS) {
+    throw std::runtime_error("failed to submit command buffer");
+  }
+
+  if (vkWaitForFences(device.device(), 1, &immFence, VK_TRUE, 999999999) != VK_SUCCESS) {
+    throw std::runtime_error("failed to wait for fence");
+  }
 }
 
 void LveSwapChain::createSwapChain() {
@@ -342,6 +381,11 @@ void LveSwapChain::createSyncObjects() {
         vkCreateFence(device.device(), &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
       throw std::runtime_error("failed to create synchronization objects for a frame!");
     }
+  }
+
+  // for immediate submit
+  if (vkCreateFence(device.device(), &fenceInfo, nullptr, &immFence) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create immediate submit fence");
   }
 }
 
