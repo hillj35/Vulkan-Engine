@@ -10,13 +10,13 @@
 #include <unordered_map>
 
 namespace lve {
-	Model::Model(LveDevice& device, VkDescriptorSetLayout descriptorSetLayout, VkImageView textureImageView, VkSampler textureSampler, std::string modelPath) : lveDevice{ device } {
+	Model::Model(LveDevice& device, Pipeline& pipeline, VkImageView textureImageView, VkSampler textureSampler, std::string modelPath) : lveDevice{ device }, drawPipeline{ pipeline } {
 		loadModel(modelPath);
 		createVertexBuffer();
 		createIndexBuffer();
 		createUniformBuffers();
 		createDescriptorPool();
-		createDescriptorSets(descriptorSetLayout, textureImageView, textureSampler);
+		createDescriptorSets(textureImageView, textureSampler);
 	}
 
 	Model::~Model() {
@@ -48,8 +48,8 @@ namespace lve {
 		memcpy(uniformBuffersMapped[currentImage], &uniformBuffer, sizeof(uniformBuffer));
 	}
 
-	void Model::createDescriptorSets(VkDescriptorSetLayout descriptorSetLayout, VkImageView textureImageView, VkSampler textureSampler) {
-		std::vector<VkDescriptorSetLayout> layouts(LveSwapChain::MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
+	void Model::createDescriptorSets(VkImageView textureImageView, VkSampler textureSampler) {
+		std::vector<VkDescriptorSetLayout> layouts(LveSwapChain::MAX_FRAMES_IN_FLIGHT, drawPipeline.descriptorSetLayout);
 		VkDescriptorSetAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 		allocInfo.descriptorPool = descriptorPool;
@@ -90,7 +90,6 @@ namespace lve {
 			descriptorWrites[1].pImageInfo = &imageInfo;
 
 			vkUpdateDescriptorSets(lveDevice.device(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-			isTextured = true;
 		}
 	}
 

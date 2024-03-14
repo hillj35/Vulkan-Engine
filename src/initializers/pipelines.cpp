@@ -71,6 +71,7 @@ namespace init {
         outPipelines->opaquePipeline.layout = pipelineLayout;
 		outPipelines->opaquePipeline.descriptorSetLayout = descriptorSetLayout;
 		outPipelines->opaquePipeline.shaderModules = { vertShaderModule, fragShaderModule };
+		outPipelines->opaquePipeline.transparent = false;
         
 		// transparent pipeline
 		pipelineBuilder.pipelineLayout = pipelineLayout;
@@ -81,5 +82,6 @@ namespace init {
 		outPipelines->transparentPipeline.layout = pipelineLayout;
 		outPipelines->transparentPipeline.descriptorSetLayout = descriptorSetLayout;
 		outPipelines->transparentPipeline.shaderModules = { vertShaderModule, fragShaderModule };
+		outPipelines->transparentPipeline.transparent = true;
     }
 }
