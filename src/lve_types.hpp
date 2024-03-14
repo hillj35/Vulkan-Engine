@@ -17,6 +17,11 @@ namespace lve {
         VkPipelineLayout layout;
         std::vector<VkShaderModule> shaderModules;
         VkDescriptorSetLayout descriptorSetLayout;
+        bool transparent = false;
+
+        bool operator<(const Pipeline& other) const {
+            return pipeline < other.pipeline && transparent <= other.transparent;
+        }
     };
     
     struct ApplicationPipelines {

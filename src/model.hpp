@@ -1,6 +1,8 @@
 #pragma once
 
 #include "lve_swap_chain.hpp"
+#include "lve_types.hpp"
+
 #include <glm/glm.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -56,21 +58,27 @@ namespace lve {
 
 	class Model {
 	public:
-		Model(LveDevice& device, VkDescriptorSetLayout descriptorSetLayout, VkImageView textureImageView, VkSampler textureSampler, std::string modelPath);
+		Model(LveDevice& device, Pipeline& pipeline, VkImageView textureImageView, VkSampler textureSampler, std::string modelPath);
 		~Model();
+
+		Model(const Model&) = delete;
+		Model operator=(const Model&) = delete;
+		Model(Model&&) = delete;
+		Model& operator=(Model&&) = delete;
 
 		void bind(VkCommandBuffer cmdBuffer, VkPipelineLayout pipelineLayout, size_t currentFrame);
 		void draw(VkCommandBuffer cmdBuffer);
 		void updateUniformBuffer(UniformBufferObject uniformBuffer, uint32_t currentImage);
+
+		Pipeline getDrawPipeline() { return drawPipeline; }
 	private:
 		void loadModel(std::string modelPath);
-		void createDescriptorSets(VkDescriptorSetLayout descriptorSetLayout, VkImageView textureImageView, VkSampler textureSampler);
+		void createDescriptorSets(VkImageView textureImageView, VkSampler textureSampler);
 		void createDescriptorPool();
 		void createIndexBuffer();
 		void createVertexBuffer();
 		void createUniformBuffers();
 
-		bool isTextured = false;
 		LveDevice& lveDevice;
 		std::vector<Vertex> vertices;
 		std::vector<uint32_t> indices;
@@ -82,6 +90,7 @@ namespace lve {
 		VkDeviceMemory vertexBufferMemory;
 		VkBuffer indexBuffer;
 		VkDeviceMemory indexBufferMemory;
+		Pipeline& drawPipeline;
 
 		std::vector<VkDescriptorSet> descriptorSets;
 		std::vector<VkBuffer> uniformBuffers;

@@ -13,20 +13,16 @@
 #include <chrono>
 #include <stdexcept>
 #include <array>
+#include <iostream>
 
 namespace lve {
 	FirstApp::FirstApp() {
-		createTextureImages();
-		init::createImageSampler(lveDevice.device(), lveDevice.properties.limits.maxSamplerAnisotropy, textureSampler);
 		init::createPipelines(lveDevice.device(), &lveSwapChain, &applicationPipelines);
-		loadModels();
+		sceneManager = std::make_unique<SceneManager>(lveDevice, applicationPipelines);
 		createCommandBuffers();
 	}
 
 	FirstApp::~FirstApp() {
-		vkDestroySampler(lveDevice.device(), textureSampler, nullptr);
-		destroyImage(lveDevice.device(), textureImage);
-		destroyImage(lveDevice.device(), cubeTextureImage);
 		destroyApplicationPipelines(lveDevice.device(), applicationPipelines);
 	}
 
@@ -37,7 +33,9 @@ namespace lve {
 			ImGui_ImplVulkan_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
-			lveGui.showColorPicker((float*)&cubePushConstants.color);
+			sceneManager->showSceneSelectGui();
+			sceneManager->getCurrentScene()->showSceneGui();
+
 			ImGui::Render();
 
 			drawFrame();
@@ -58,11 +56,6 @@ namespace lve {
 		if (vkAllocateCommandBuffers(lveDevice.device(), &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
 			throw std::runtime_error("failed to allocated command buffers");
 		}
-	}
-
-	void FirstApp::createTextureImages() {
-		util::loadTextureImage(&lveDevice, TEXTURE_PATH, textureImage);
-		util::loadTextureImage(&lveDevice, CUBE_TEXTURE_PATH, cubeTextureImage);
 	}
 
 	void FirstApp::drawFrame() {
@@ -125,17 +118,8 @@ namespace lve {
 
 		vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &scissor);
 
-		TransparentPushConstants pushConstants{};
-		pushConstants.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+		sceneManager->getCurrentScene()->draw(commandBuffers[imageIndex], lveSwapChain.getCurrentFrame());
 
-		model->bind(commandBuffers[imageIndex], applicationPipelines.opaquePipeline.layout, lveSwapChain.getCurrentFrame());
-		vkCmdPushConstants(commandBuffers[imageIndex], applicationPipelines.opaquePipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(TransparentPushConstants), &pushConstants);
-		model->draw(commandBuffers[imageIndex]);
-
-		vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, applicationPipelines.transparentPipeline.pipeline);
-		cubeModel->bind(commandBuffers[imageIndex], applicationPipelines.transparentPipeline.layout, lveSwapChain.getCurrentFrame());
-		vkCmdPushConstants(commandBuffers[imageIndex], applicationPipelines.transparentPipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(TransparentPushConstants), &cubePushConstants);
-		cubeModel->draw(commandBuffers[imageIndex]);
 		vkCmdEndRendering(commandBuffers[imageIndex]);
 
 		util::transitionImageLayout(commandBuffers[imageIndex], lveSwapChain.getImage(imageIndex), lveSwapChain.getSwapChainImageFormat(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
@@ -148,38 +132,11 @@ namespace lve {
 			throw std::runtime_error("failed to record command buffer");
 		}
 	
-
-		updateUniformBuffer(lveSwapChain.getCurrentFrame());
-
-
+		sceneManager->getCurrentScene()->updateUniformBuffer(lveSwapChain.getCurrentFrame(), lveSwapChain.width(), lveSwapChain.height());
 
 		result = lveSwapChain.submitCommandBuffers(&commandBuffers[imageIndex], &imageIndex);
 		if (result != VK_SUCCESS) {
 			throw std::runtime_error("failed to present swap chain image");
 		}
-	}
-
-	void FirstApp::loadModels() {
-		model = std::make_unique<Model>(lveDevice, applicationPipelines.opaquePipeline.descriptorSetLayout, textureImage.view, textureSampler, MODEL_PATH);
-		cubeModel = std::make_unique<Model>(lveDevice, applicationPipelines.opaquePipeline.descriptorSetLayout, cubeTextureImage.view, textureSampler, CUBE_MODEL_PATH);
-	}
-
-	void FirstApp::updateUniformBuffer(uint32_t currentImage) {
-		static auto startTime = std::chrono::high_resolution_clock::now();
-
-		auto currentTime = std::chrono::high_resolution_clock::now();
-		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
-		UniformBufferObject ubo{};
-		ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		ubo.proj = glm::perspective(glm::radians(45.0f), lveSwapChain.width() / (float)lveSwapChain.height(), 0.1f, 10.0f);
-		// flip Y clip coordinate
-		ubo.proj[1][1] *= -1;
-
-		model->updateUniformBuffer(ubo, currentImage);
-
-		ubo.model = glm::scale(glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f)), glm::vec3(0.5f));
-		cubeModel->updateUniformBuffer(ubo, currentImage);
 	}
 }
