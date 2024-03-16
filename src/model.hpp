@@ -1,5 +1,6 @@
 #pragma once
 
+#include "descriptor_allocator.hpp"
 #include "lve_swap_chain.hpp"
 #include "lve_types.hpp"
 
@@ -58,7 +59,7 @@ namespace lve {
 
 	class Model {
 	public:
-		Model(LveDevice& device, Pipeline& pipeline, VkImageView textureImageView, VkSampler textureSampler, std::string modelPath);
+		Model(LveDevice& device, Pipeline& pipeline, DescriptorAllocator& descriptorAllocator, VkImageView textureImageView, VkSampler textureSampler, std::string modelPath);
 		~Model();
 
 		Model(const Model&) = delete;
@@ -74,7 +75,6 @@ namespace lve {
 	private:
 		void loadModel(std::string modelPath);
 		void createDescriptorSets(VkImageView textureImageView, VkSampler textureSampler);
-		void createDescriptorPool();
 		void createIndexBuffer();
 		void createVertexBuffer();
 		void createUniformBuffers();
@@ -85,12 +85,12 @@ namespace lve {
 		uint32_t vertexCount;
 		uint32_t indexCount;
 
-		VkDescriptorPool descriptorPool;
 		VkBuffer vertexBuffer;
 		VkDeviceMemory vertexBufferMemory;
 		VkBuffer indexBuffer;
 		VkDeviceMemory indexBufferMemory;
 		Pipeline& drawPipeline;
+		DescriptorAllocator& descriptorAllocator;
 
 		std::vector<VkDescriptorSet> descriptorSets;
 		std::vector<VkBuffer> uniformBuffers;

@@ -10,11 +10,14 @@ namespace lve {
             void updateUniformBuffer(uint32_t currentImage, uint32_t width, uint32_t height);
 
         protected:
-            void loadModels();
-            void loadTextureImages();
+            virtual void createDescriptors();
+            virtual void loadModels();
+            virtual void loadTextureImages();
 
-            LveDevice& lveDevice;
+            std::string sceneName;
             ApplicationPipelines pipelines;
+            LveDevice& lveDevice;
+            DescriptorAllocator descriptorAllocator { lveDevice };
             
             std::map<Pipeline, std::vector<std::unique_ptr<Model>>> pipelineToModelMap;
 

@@ -10,12 +10,12 @@
 #include <unordered_map>
 
 namespace lve {
-	Model::Model(LveDevice& device, Pipeline& pipeline, VkImageView textureImageView, VkSampler textureSampler, std::string modelPath) : lveDevice{ device }, drawPipeline{ pipeline } {
+	Model::Model(LveDevice& device, Pipeline& pipeline, DescriptorAllocator& descriptorAllocator, VkImageView textureImageView, VkSampler textureSampler, std::string modelPath) 
+	: lveDevice{ device }, drawPipeline{ pipeline }, descriptorAllocator { descriptorAllocator } {
 		loadModel(modelPath);
 		createVertexBuffer();
 		createIndexBuffer();
 		createUniformBuffers();
-		createDescriptorPool();
 		createDescriptorSets(textureImageView, textureSampler);
 	}
 
@@ -24,7 +24,6 @@ namespace lve {
 		vkFreeMemory(lveDevice.device(), vertexBufferMemory, nullptr);
 		vkDestroyBuffer(lveDevice.device(), indexBuffer, nullptr);
 		vkFreeMemory(lveDevice.device(), indexBufferMemory, nullptr);
-		vkDestroyDescriptorPool(lveDevice.device(), descriptorPool, nullptr);
 
 		for (size_t i = 0; i < LveSwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
 			vkDestroyBuffer(lveDevice.device(), uniformBuffers[i], nullptr);
@@ -49,17 +48,8 @@ namespace lve {
 	}
 
 	void Model::createDescriptorSets(VkImageView textureImageView, VkSampler textureSampler) {
-		std::vector<VkDescriptorSetLayout> layouts(LveSwapChain::MAX_FRAMES_IN_FLIGHT, drawPipeline.descriptorSetLayout);
-		VkDescriptorSetAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		allocInfo.descriptorPool = descriptorPool;
-		allocInfo.descriptorSetCount = static_cast<uint32_t>(LveSwapChain::MAX_FRAMES_IN_FLIGHT);
-		allocInfo.pSetLayouts = layouts.data();
-
-		descriptorSets.resize(LveSwapChain::MAX_FRAMES_IN_FLIGHT);
-		if (vkAllocateDescriptorSets(lveDevice.device(), &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
-			throw std::runtime_error("failed to allocate descriptor sets");
-		}
+		std::cout << "descriptor setting \n";
+		descriptorAllocator.allocateDescriptorSets(drawPipeline.descriptorSetLayout, descriptorSets);
 
 		for (size_t i = 0; i < LveSwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
 			VkDescriptorBufferInfo bufferInfo{};
@@ -91,24 +81,7 @@ namespace lve {
 
 			vkUpdateDescriptorSets(lveDevice.device(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 		}
-	}
-
-	void Model::createDescriptorPool() {
-		std::array<VkDescriptorPoolSize, 2> poolSizes{};
-		poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		poolSizes[0].descriptorCount = static_cast<uint32_t>(LveSwapChain::MAX_FRAMES_IN_FLIGHT);
-		poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		poolSizes[1].descriptorCount = static_cast<uint32_t>(LveSwapChain::MAX_FRAMES_IN_FLIGHT);
-
-		VkDescriptorPoolCreateInfo poolInfo{};
-		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-		poolInfo.pPoolSizes = poolSizes.data();
-		poolInfo.maxSets = static_cast<uint32_t>(LveSwapChain::MAX_FRAMES_IN_FLIGHT);
-
-		if (vkCreateDescriptorPool(lveDevice.device(), &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create descriptor pool");
-		}
+		std::cout << "end setting\n";
 	}
 
 	void Model::createIndexBuffer() {

@@ -2,6 +2,7 @@
 
 #include "model.hpp"
 #include "lve_types.hpp"
+#include "descriptor_allocator.hpp"
 
 #include <map>
 #include <vector>
@@ -18,11 +19,14 @@ namespace lve {
             virtual void updateUniformBuffer(uint32_t currentImage, uint32_t width, uint32_t height) = 0;
 
         protected:
+            virtual void createDescriptors() = 0;
             virtual void loadModels() = 0;
             virtual void loadTextureImages() = 0;
 
-            LveDevice& lveDevice;
+            std::string sceneName;
             ApplicationPipelines pipelines;
+            LveDevice& lveDevice;
+            //DescriptorAllocator descriptorAllocator { lveDevice };
             
             std::map<Pipeline, std::vector<std::unique_ptr<Model>>> pipelineToModelMap;
     };

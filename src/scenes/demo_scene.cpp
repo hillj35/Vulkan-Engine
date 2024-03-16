@@ -11,6 +11,7 @@
 namespace lve {
     DemoScene::DemoScene(LveDevice& device, ApplicationPipelines& pipelines) : lveDevice { device }, pipelines { pipelines }, IScene {device, pipelines} {
         init::createImageSampler(lveDevice.device(), lveDevice.properties.limits.maxSamplerAnisotropy, textureSampler);
+        createDescriptors();
         loadTextureImages();
         loadModels();
     }
@@ -19,6 +20,14 @@ namespace lve {
 		vkDestroySampler(lveDevice.device(), textureSampler, nullptr);
 		destroyImage(lveDevice.device(), roomTextureImage);
 		destroyImage(lveDevice.device(), cubeTextureImage);
+    }
+
+    void DemoScene::createDescriptors() {
+        std::vector<VkDescriptorPoolSize> poolSizes{};
+        poolSizes.push_back({ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(LveSwapChain::MAX_FRAMES_IN_FLIGHT)});
+        poolSizes.push_back({ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<uint32_t>(LveSwapChain::MAX_FRAMES_IN_FLIGHT)});
+
+        descriptorAllocator.createDescriptorPool(poolSizes, 10);
     }
 
     void DemoScene::draw(VkCommandBuffer cmd, uint32_t currentFrame) {
@@ -71,8 +80,8 @@ namespace lve {
     void DemoScene::loadModels() {
         std::vector<std::unique_ptr<Model>> models;
 
-        models.push_back(std::make_unique<Model>(lveDevice, pipelines.opaquePipeline, roomTextureImage.view, textureSampler, ROOM_MODEL_PATH));
-        models.push_back(std::make_unique<Model>(lveDevice, pipelines.transparentPipeline, cubeTextureImage.view, textureSampler, CUBE_MODEL_PATH));
+        models.push_back(std::make_unique<Model>(lveDevice, pipelines.opaquePipeline, descriptorAllocator, roomTextureImage.view, textureSampler, ROOM_MODEL_PATH));
+        models.push_back(std::make_unique<Model>(lveDevice, pipelines.transparentPipeline, descriptorAllocator, cubeTextureImage.view, textureSampler, CUBE_MODEL_PATH));
 
         for (auto& model : models) {
             pipelineToModelMap[model->getDrawPipeline()].push_back(std::move(model));
