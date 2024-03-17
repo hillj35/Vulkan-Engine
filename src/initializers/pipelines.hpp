@@ -6,4 +6,5 @@
 
 namespace init {
     void createPipelines(VkDevice device, lve::LveSwapChain* swapChain, lve::ApplicationPipelines* outPipelines);
+    void createComputePipelines(VkDevice device, lve::LveSwapChain* swapChain, lve::ApplicationPipelines* outPipelines);
 }

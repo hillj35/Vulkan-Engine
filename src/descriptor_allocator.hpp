@@ -16,6 +16,7 @@ namespace lve {
 
             void createDescriptorPool(std::vector<VkDescriptorPoolSize> poolSizes, uint32_t maxSets);
             void allocateDescriptorSets(VkDescriptorSetLayout layout, std::vector<VkDescriptorSet>& outDescriptorSets);
+            void destroyDescriptorPool();
 
         private:
             VkDescriptorPool descriptorPool;

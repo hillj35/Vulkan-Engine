@@ -23,15 +23,24 @@ namespace lve {
             return pipeline < other.pipeline && transparent <= other.transparent;
         }
     };
+
+    struct ComputePipelines {
+        Pipeline testPipeline;
+    };
     
     struct ApplicationPipelines {
         Pipeline opaquePipeline;
         Pipeline transparentPipeline;
+        ComputePipelines computePipelines;
     };
 
     struct TransparentPushConstants {
         glm::mat4 transform;
         glm::vec4 color;
+    };
+
+    struct ComputePushConstants {
+        glm::vec4 test;
     };
 
     void destroyImage(VkDevice device, const AllocatedImage& img);

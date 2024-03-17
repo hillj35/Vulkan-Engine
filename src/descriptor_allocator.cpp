@@ -5,14 +5,10 @@
 
 namespace lve {
     DescriptorAllocator::DescriptorAllocator(LveDevice& device) : device { device } {
-        std::cout << "descriptor allocator constructor\n";
     }
 
     DescriptorAllocator::~DescriptorAllocator() {
-        std::cout << "descriptor allocator destructor\n";
-        if (descriptorPool != VK_NULL_HANDLE) {
-            vkDestroyDescriptorPool(device.device(), descriptorPool, nullptr);
-        }
+
     }
 
     void DescriptorAllocator::createDescriptorPool(std::vector<VkDescriptorPoolSize> poolSizes, uint32_t maxSets) {
@@ -39,5 +35,11 @@ namespace lve {
         if (vkAllocateDescriptorSets(device.device(), &allocInfo, outDescriptorSets.data()) != VK_SUCCESS) {
 			throw std::runtime_error("failed to allocate descriptor sets");
 		}
+    }
+
+    void DescriptorAllocator::destroyDescriptorPool() {
+        if (descriptorPool) {
+            vkDestroyDescriptorPool(device.device(), descriptorPool, nullptr);
+        }
     }
 }

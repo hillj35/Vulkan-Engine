@@ -48,7 +48,6 @@ namespace lve {
 	}
 
 	void Model::createDescriptorSets(VkImageView textureImageView, VkSampler textureSampler) {
-		std::cout << "descriptor setting \n";
 		descriptorAllocator.allocateDescriptorSets(drawPipeline.descriptorSetLayout, descriptorSets);
 
 		for (size_t i = 0; i < LveSwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
@@ -81,7 +80,6 @@ namespace lve {
 
 			vkUpdateDescriptorSets(lveDevice.device(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 		}
-		std::cout << "end setting\n";
 	}
 
 	void Model::createIndexBuffer() {

@@ -1,5 +1,5 @@
 #pragma once
-#include "scenes/demo_scene.hpp"
+#include "scene.hpp"
 #include <vector>
 
 namespace lve {
@@ -7,12 +7,16 @@ namespace lve {
         public:
             SceneManager(LveDevice& device, ApplicationPipelines& pipelines);
             ~SceneManager();
+            void changeScene();
             void showSceneSelectGui();
+            bool shouldChangeScene() { return _shouldChangeScene; }
             std::shared_ptr<IScene> getCurrentScene() { return currentScene; }
 
         private:
             void initScenes();
 
+            int sceneChangeIdx = 0;
+            bool _shouldChangeScene = false;
             LveDevice& device;
             ApplicationPipelines pipelines;
             std::shared_ptr<IScene> currentScene;

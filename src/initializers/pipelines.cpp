@@ -19,10 +19,10 @@ namespace init {
 
 		VkDescriptorSetLayoutBinding samplerLayoutBinding{};
 		samplerLayoutBinding.binding = 1;
-		samplerLayoutBinding.descriptorCount = 1;
 		samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		samplerLayoutBinding.pImmutableSamplers = nullptr;
+		samplerLayoutBinding.descriptorCount = 1;
 		samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		samplerLayoutBinding.pImmutableSamplers = nullptr;
 
 		std::array<VkDescriptorSetLayoutBinding, 2> bindings = {uboLayoutBinding, samplerLayoutBinding};
 
@@ -84,4 +84,54 @@ namespace init {
 		outPipelines->transparentPipeline.shaderModules = { vertShaderModule, fragShaderModule };
 		outPipelines->transparentPipeline.transparent = true;
     }
+
+	void createComputePipelines (VkDevice device, lve::LveSwapChain* swapChain, lve::ApplicationPipelines* outPipelines) {
+        // descriptor sets
+        VkDescriptorSetLayoutBinding storageImageBinding{};
+		storageImageBinding.binding = 0;
+		storageImageBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+		storageImageBinding.descriptorCount = 1;
+		storageImageBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+		storageImageBinding.pImmutableSamplers = nullptr;
+
+
+		std::array<VkDescriptorSetLayoutBinding, 1> bindings = {storageImageBinding};
+
+		VkDescriptorSetLayoutCreateInfo layoutInfo{};
+		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+		layoutInfo.pBindings = bindings.data();
+
+        VkDescriptorSetLayout descriptorSetLayout;
+		if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create descriptor set layout!");
+		}
+
+        // pipeline layout
+        VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		pipelineLayoutInfo.setLayoutCount = 1;
+		pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+
+		// push constants
+		VkPushConstantRange pushConstant = pushConstants<lve::ComputePushConstants>(VK_SHADER_STAGE_COMPUTE_BIT);
+		pipelineLayoutInfo.pushConstantRangeCount = 1;
+		pipelineLayoutInfo.pPushConstantRanges = &pushConstant;
+
+        VkPipelineLayout pipelineLayout;
+		if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create pipeline layout!");
+		}
+
+		lve::PipelineBuilder pipelineBuilder;
+		pipelineBuilder.pipelineLayout = pipelineLayout;
+		VkShaderModule computeShaderModule = lve::PipelineBuilder::createShaderModule(device, "shaders/compute.comp.spv");
+		pipelineBuilder.setComputeShader(computeShaderModule);
+
+		outPipelines->computePipelines.testPipeline.pipeline = pipelineBuilder.buildComputePipeline(device);
+		outPipelines->computePipelines.testPipeline.layout = pipelineLayout;
+		outPipelines->computePipelines.testPipeline.descriptorSetLayout = descriptorSetLayout;
+		outPipelines->computePipelines.testPipeline.shaderModules = {computeShaderModule}; 
+		outPipelines->computePipelines.testPipeline.transparent = false;
+	}
 }

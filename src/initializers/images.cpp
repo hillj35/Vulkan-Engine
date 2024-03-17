@@ -22,7 +22,7 @@ namespace init {
 		imageInfo.flags = 0;
 
 		device->createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image.image, image.memory);
-        image.view = device->createImageView(image.image, VK_FORMAT_R8G8B8A8_SRGB);
+        image.view = device->createImageView(image.image, format);
 	}
 
     void createImageSampler(VkDevice device, float maxAnisotropy, VkSampler &outTextureSampler) {

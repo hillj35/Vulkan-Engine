@@ -100,6 +100,20 @@ namespace lve {
             throw std::runtime_error("failed to create graphics pipeline");
             return VK_NULL_HANDLE;
         }
+    
+        return newPipeline;
+    }
+
+    VkPipeline PipelineBuilder::buildComputePipeline(VkDevice device) {
+        VkComputePipelineCreateInfo pipelineInfo { .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO };
+        pipelineInfo.pNext = nullptr;
+        pipelineInfo.stage = shaderStages[0];
+        pipelineInfo.layout = pipelineLayout;
+
+        VkPipeline newPipeline;
+        if (vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &newPipeline) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create compute pipeline");
+        }
         return newPipeline;
     }
 
@@ -107,6 +121,10 @@ namespace lve {
         shaderStages.clear();
         shaderStages.push_back(shaderStageCreateInfo(VK_SHADER_STAGE_VERTEX_BIT, vertexShader));
         shaderStages.push_back(shaderStageCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShader));
+    }
+
+    void PipelineBuilder::setComputeShader(VkShaderModule computeShader) {
+        shaderStages.push_back(shaderStageCreateInfo(VK_SHADER_STAGE_COMPUTE_BIT, computeShader));
     }
 
     void PipelineBuilder::setInputTopology(VkPrimitiveTopology topology) {

@@ -22,7 +22,9 @@ namespace lve {
         void clear();
 
         VkPipeline buildPipeline(VkDevice device);
+        VkPipeline buildComputePipeline(VkDevice device);
         void setShaders(VkShaderModule vertexShader, VkShaderModule fragmentShader);
+        void setComputeShader(VkShaderModule computeShader);
         void setInputTopology(VkPrimitiveTopology topology);
         void setPolygonMode(VkPolygonMode mode);
         void setCullMode(VkCullModeFlags cullMode, VkFrontFace frontFace);

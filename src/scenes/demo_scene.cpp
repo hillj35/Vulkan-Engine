@@ -9,20 +9,30 @@
 #include <iostream>
 
 namespace lve {
-    DemoScene::DemoScene(LveDevice& device, ApplicationPipelines& pipelines) : lveDevice { device }, pipelines { pipelines }, IScene {device, pipelines} {
+    DemoScene::DemoScene(LveDevice& device, ApplicationPipelines& pipelines) 
+        : IScene {device, pipelines} {
+        sceneName = "Demo Scene";
+    }
+
+    DemoScene::~DemoScene() {
+    }
+
+    void DemoScene::initScene() {
         init::createImageSampler(lveDevice.device(), lveDevice.properties.limits.maxSamplerAnisotropy, textureSampler);
-        createDescriptors();
+        createDescriptorPool();
         loadTextureImages();
         loadModels();
     }
 
-    DemoScene::~DemoScene() {
+    void DemoScene::destroyScene() {
+        descriptorAllocator.destroyDescriptorPool();
 		vkDestroySampler(lveDevice.device(), textureSampler, nullptr);
 		destroyImage(lveDevice.device(), roomTextureImage);
 		destroyImage(lveDevice.device(), cubeTextureImage);
     }
 
-    void DemoScene::createDescriptors() {
+
+    void DemoScene::createDescriptorPool() {
         std::vector<VkDescriptorPoolSize> poolSizes{};
         poolSizes.push_back({ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(LveSwapChain::MAX_FRAMES_IN_FLIGHT)});
         poolSizes.push_back({ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<uint32_t>(LveSwapChain::MAX_FRAMES_IN_FLIGHT)});
@@ -30,7 +40,48 @@ namespace lve {
         descriptorAllocator.createDescriptorPool(poolSizes, 10);
     }
 
-    void DemoScene::draw(VkCommandBuffer cmd, uint32_t currentFrame) {
+    void DemoScene::draw(VkCommandBuffer cmd, LveSwapChain& swapChain, int imageIndex, uint32_t currentFrame) {
+        VkRenderingAttachmentInfo colorAttachment ={ .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
+		colorAttachment.imageView = swapChain.getImageView(imageIndex);
+		colorAttachment.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+		colorAttachment.clearValue = { 0.1f, 0.1f, 0.1f, 1.0f };
+		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+
+		VkRenderingAttachmentInfo depthAttachment { .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
+		depthAttachment.imageView = swapChain.getDepthImageView(imageIndex);
+		depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+		depthAttachment.clearValue.depthStencil = { 1.0f, 0 };
+		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+
+		VkRenderingInfo renderingInfo { .sType = VK_STRUCTURE_TYPE_RENDERING_INFO };
+		renderingInfo.renderArea = VkRect2D { VkOffset2D {0, 0}, swapChain.getSwapChainExtent()};
+		renderingInfo.layerCount = 1;
+		renderingInfo.colorAttachmentCount = 1;
+		renderingInfo.pColorAttachments = &colorAttachment;
+		renderingInfo.pDepthAttachment = &depthAttachment;
+		renderingInfo.pStencilAttachment = nullptr;
+		vkCmdBeginRendering(cmd, &renderingInfo);
+
+		VkViewport viewport = {};
+		viewport.x = 0;
+		viewport.y = 0;
+		viewport.width = swapChain.getSwapChainExtent().width;
+		viewport.height = swapChain.getSwapChainExtent().height;
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+
+		vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+		VkRect2D scissor = {};
+		scissor.offset.x = 0;
+		scissor.offset.y = 0;
+		scissor.extent.width = swapChain.getSwapChainExtent().width;
+		scissor.extent.height = swapChain.getSwapChainExtent().height;
+
+		vkCmdSetScissor(cmd, 0, 1, &scissor);
+
 		TransparentPushConstants defaultPushConstants{};
 		defaultPushConstants.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -43,6 +94,11 @@ namespace lve {
                 model->draw(cmd);
             }
         }
+
+        vkCmdEndRendering(cmd);
+
+        util::transitionImageLayout(cmd, swapChain.getImage(imageIndex), swapChain.getSwapChainImageFormat(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
     }
 
     void DemoScene::showSceneGui() {
