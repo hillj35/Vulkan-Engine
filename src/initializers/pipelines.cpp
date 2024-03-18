@@ -114,7 +114,7 @@ namespace init {
 		pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
 
 		// push constants
-		VkPushConstantRange pushConstant = pushConstants<lve::ComputePushConstants>(VK_SHADER_STAGE_COMPUTE_BIT);
+		VkPushConstantRange pushConstant = pushConstants<lve::PerlinPushConstants>(VK_SHADER_STAGE_COMPUTE_BIT);
 		pipelineLayoutInfo.pushConstantRangeCount = 1;
 		pipelineLayoutInfo.pPushConstantRanges = &pushConstant;
 
@@ -128,10 +128,10 @@ namespace init {
 		VkShaderModule computeShaderModule = lve::PipelineBuilder::createShaderModule(device, "shaders/compute.comp.spv");
 		pipelineBuilder.setComputeShader(computeShaderModule);
 
-		outPipelines->computePipelines.testPipeline.pipeline = pipelineBuilder.buildComputePipeline(device);
-		outPipelines->computePipelines.testPipeline.layout = pipelineLayout;
-		outPipelines->computePipelines.testPipeline.descriptorSetLayout = descriptorSetLayout;
-		outPipelines->computePipelines.testPipeline.shaderModules = {computeShaderModule}; 
-		outPipelines->computePipelines.testPipeline.transparent = false;
+		outPipelines->computePipelines.perlinNoisePipeline.pipeline = pipelineBuilder.buildComputePipeline(device);
+		outPipelines->computePipelines.perlinNoisePipeline.layout = pipelineLayout;
+		outPipelines->computePipelines.perlinNoisePipeline.descriptorSetLayout = descriptorSetLayout;
+		outPipelines->computePipelines.perlinNoisePipeline.shaderModules = {computeShaderModule}; 
+		outPipelines->computePipelines.perlinNoisePipeline.transparent = false;
 	}
 }

@@ -10,7 +10,7 @@ namespace lve {
     void destroyApplicationPipelines(VkDevice device, const ApplicationPipelines& pipelines) {
         destroyPipeline(device, pipelines.opaquePipeline);
         vkDestroyPipeline(device, pipelines.transparentPipeline.pipeline, nullptr);
-        destroyPipeline(device, pipelines.computePipelines.testPipeline);
+        destroyPipeline(device, pipelines.computePipelines.perlinNoisePipeline);
     }
 
     void destroyPipeline(VkDevice device, const Pipeline& pipeline) {

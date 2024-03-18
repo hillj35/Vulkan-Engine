@@ -1,4 +1,6 @@
 #include "compute_scene.hpp"
+#include "imgui.h"
+
 #include "../initializers/images.hpp"
 #include "../utility/images.hpp"
 
@@ -6,6 +8,7 @@ namespace lve {
     ComputeScene::ComputeScene(LveDevice& device, ApplicationPipelines& pipelines) 
         : IScene {device, pipelines} {
         sceneName = "Compute Preview Scene";
+        pushConstants.scale = 10.0f;
     }
 
     ComputeScene::~ComputeScene() {
@@ -41,7 +44,7 @@ namespace lve {
     }
 
     void ComputeScene::createDescriptorSets() {
-        descriptorAllocator.allocateDescriptorSets(pipelines.computePipelines.testPipeline.descriptorSetLayout, computeDescriptorSets);
+        descriptorAllocator.allocateDescriptorSets(pipelines.computePipelines.perlinNoisePipeline.descriptorSetLayout, computeDescriptorSets);
 
         for (size_t i = 0; i < LveSwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
             VkDescriptorImageInfo imageInfo{};
@@ -66,8 +69,9 @@ namespace lve {
     void ComputeScene::draw(VkCommandBuffer cmd, LveSwapChain& swapChain, int imageIndex,  uint32_t currentFrame) {
         util::transitionImageLayout(cmd, computeImages[currentFrame].image, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipelines.computePipelines.testPipeline.pipeline);
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipelines.computePipelines.testPipeline.layout, 0, 1, &computeDescriptorSets[currentFrame], 0, nullptr);
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipelines.computePipelines.perlinNoisePipeline.pipeline);
+        vkCmdPushConstants(cmd, pipelines.computePipelines.perlinNoisePipeline.layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(PerlinPushConstants), &pushConstants);
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipelines.computePipelines.perlinNoisePipeline.layout, 0, 1, &computeDescriptorSets[currentFrame], 0, nullptr);
         vkCmdDispatch(cmd, std::ceil(width/16.0), std::ceil(height/16.0), 1);
         
         // copy resulting image to swapchain image
@@ -83,7 +87,11 @@ namespace lve {
     }
 
     void ComputeScene::showSceneGui() {
-
+        ImGui::Begin("Perlin Noise Attributes");
+        ImGui::DragFloat("Scale", (float*)&pushConstants.scale, 0.01f, 0.1f, FLT_MAX, "%.3f", 0);
+        ImGui::DragFloat("Offset X", (float*)&pushConstants.offset.x, 0.01f, FLT_MIN, FLT_MAX, "%.3f", 0);
+        ImGui::DragFloat("Offset Y", (float*)&pushConstants.offset.y, 0.01f, FLT_MIN, FLT_MAX, "%.3f", 0);
+        ImGui::End();
     }
 
     void ComputeScene::updateUniformBuffer(uint32_t currentImage, uint32_t width, uint32_t height) {

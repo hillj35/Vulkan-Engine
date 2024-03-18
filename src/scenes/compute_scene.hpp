@@ -20,7 +20,7 @@ namespace lve {
             const int width = 1600;
             const int height = 900;
 
-            ComputePushConstants pushConstants{};
+            PerlinPushConstants pushConstants{};
             std::vector<AllocatedImage> computeImages;
             std::vector<VkDescriptorSet> computeDescriptorSets;
     };

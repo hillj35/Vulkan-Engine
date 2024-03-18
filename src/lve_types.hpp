@@ -25,7 +25,7 @@ namespace lve {
     };
 
     struct ComputePipelines {
-        Pipeline testPipeline;
+        Pipeline perlinNoisePipeline;
     };
     
     struct ApplicationPipelines {
@@ -39,8 +39,9 @@ namespace lve {
         glm::vec4 color;
     };
 
-    struct ComputePushConstants {
-        glm::vec4 test;
+    struct PerlinPushConstants {
+        glm::vec2 offset;
+        glm::float32 scale;
     };
 
     void destroyImage(VkDevice device, const AllocatedImage& img);

@@ -4,14 +4,45 @@ layout (local_size_x = 16, local_size_y = 16) in;
 
 layout (rgba16f, set = 0, binding = 0) uniform image2D image;
 
+layout(push_constant) uniform constants
+{
+	vec2 offset;
+	float scale;
+} PushConstants;
+
+vec2 random (in vec2 sv) {
+    sv = vec2( dot(sv,vec2(127.1,311.7)),
+              dot(sv,vec2(269.5,183.3)) );
+    return -1.0 + 2.0*fract(sin(sv)*43758.5453123);
+}
+
+float noise (in vec2 sv) {
+    vec2 i = floor(sv);
+    vec2 f = fract(sv);
+
+    vec2 u = f*f*(3.0-2.0*f);
+
+    return mix( mix( dot( random(i + vec2(0.0,0.0) ), f - vec2(0.0,0.0) ),
+                     dot( random(i + vec2(1.0,0.0) ), f - vec2(1.0,0.0) ), u.x),
+                mix( dot( random(i + vec2(0.0,1.0) ), f - vec2(0.0,1.0) ),
+                     dot( random(i + vec2(1.0,1.0) ), f - vec2(1.0,1.0) ), u.x), u.y);
+}
+
 void main() {
     ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
     ivec2 size = imageSize(image);
+    vec2 resolution = vec2(1600, 900);
 
     if (texelCoord.x < size.x && texelCoord.y < size.y)
     {
-        vec4 color = vec4(1.0, 1.0, 1.0, 1.0);
+        vec2 sv = texelCoord / resolution;
+        sv.x *= resolution.x / resolution.y;
+        
+        vec3 color = vec3(0.0);
+        vec2 pos = vec2(sv*PushConstants.scale) + PushConstants.offset;
 
-        imageStore(image, texelCoord, color);
+        color = vec3(noise(pos) * .5 + .5);
+
+        imageStore(image, texelCoord, vec4(color, 1.0));
     }
 }

@@ -15,7 +15,7 @@ namespace lve {
         private:
             void initScenes();
 
-            int sceneChangeIdx = 0;
+            int sceneChangeIdx = 1;
             bool _shouldChangeScene = false;
             LveDevice& device;
             ApplicationPipelines pipelines;
