@@ -8,18 +8,18 @@
 #include "lve_swap_chain.hpp"
 
 namespace lve {
-    class LveGui {
-        public:
-            LveGui(LveDevice& device, LveSwapChain& swapChain, LveWindow& window);
-            ~LveGui();
-            void init();
-            void draw(VkCommandBuffer cmd, VkImageView targetImageView);
-            void showColorPicker(float* outColor);
+class LveGui {
+public:
+    LveGui(LveDevice &device, LveSwapChain &swapChain, LveWindow &window);
+    ~LveGui();
+    void init();
+    void draw(VkCommandBuffer cmd, VkImageView targetImageView);
+    void showColorPicker(float *outColor);
 
-        private:
-            LveDevice& device;
-            LveSwapChain& swapChain;
-            LveWindow& window;
-            VkDescriptorPool imguiPool;
-    };
-}
+private:
+    LveDevice &device;
+    LveSwapChain &swapChain;
+    LveWindow &window;
+    VkDescriptorPool imguiPool;
+};
+} // namespace lve

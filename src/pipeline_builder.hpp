@@ -2,41 +2,41 @@
 
 namespace lve {
 
+class PipelineBuilder {
+public:
+    std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
 
-    class PipelineBuilder {
-    public: 
-        std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
+    VkPipelineInputAssemblyStateCreateInfo inputAssembly;
+    VkPipelineRasterizationStateCreateInfo rasterizer;
+    VkPipelineColorBlendAttachmentState colorBlendAttachment;
+    VkPipelineMultisampleStateCreateInfo multisampling;
+    VkPipelineLayout pipelineLayout;
+    VkPipelineDepthStencilStateCreateInfo depthStencil;
+    VkPipelineRenderingCreateInfo renderInfo;
+    VkFormat colorAttachmentformat;
 
-        VkPipelineInputAssemblyStateCreateInfo inputAssembly;
-        VkPipelineRasterizationStateCreateInfo rasterizer;
-        VkPipelineColorBlendAttachmentState colorBlendAttachment;
-        VkPipelineMultisampleStateCreateInfo multisampling;
-        VkPipelineLayout pipelineLayout;
-        VkPipelineDepthStencilStateCreateInfo depthStencil;
-        VkPipelineRenderingCreateInfo renderInfo;
-        VkFormat colorAttachmentformat;
+    PipelineBuilder() { clear(); }
+    static VkShaderModule createShaderModule(VkDevice device, const std::string &filePath);
 
-        PipelineBuilder(){ clear(); }
-        static VkShaderModule createShaderModule(VkDevice device, const std::string& filePath);
+    void clear();
 
-        void clear();
+    VkPipeline buildPipeline(VkDevice device);
+    VkPipeline buildComputePipeline(VkDevice device);
+    void setShaders(VkShaderModule vertexShader, VkShaderModule fragmentShader);
+    void setComputeShader(VkShaderModule computeShader);
+    void setInputTopology(VkPrimitiveTopology topology);
+    void setPolygonMode(VkPolygonMode mode);
+    void setCullMode(VkCullModeFlags cullMode, VkFrontFace frontFace);
+    void setMultisamplingNone();
+    void disableBlending();
+    void enableBlending();
+    void setColorAttachmentFormat(VkFormat format);
+    void setDepthFormat(VkFormat format);
+    void disableDepthTest();
+    void enableDepthTest();
 
-        VkPipeline buildPipeline(VkDevice device);
-        VkPipeline buildComputePipeline(VkDevice device);
-        void setShaders(VkShaderModule vertexShader, VkShaderModule fragmentShader);
-        void setComputeShader(VkShaderModule computeShader);
-        void setInputTopology(VkPrimitiveTopology topology);
-        void setPolygonMode(VkPolygonMode mode);
-        void setCullMode(VkCullModeFlags cullMode, VkFrontFace frontFace);
-        void setMultisamplingNone();
-        void disableBlending();
-        void enableBlending();
-        void setColorAttachmentFormat(VkFormat format);
-        void setDepthFormat(VkFormat format);
-        void disableDepthTest();
-        void enableDepthTest();
-
-    private:
-        static VkPipelineShaderStageCreateInfo shaderStageCreateInfo(VkShaderStageFlagBits flags, VkShaderModule module);
-    };
-}
+private:
+    static VkPipelineShaderStageCreateInfo shaderStageCreateInfo(VkShaderStageFlagBits flags,
+                                                                 VkShaderModule module);
+};
+} // namespace lve

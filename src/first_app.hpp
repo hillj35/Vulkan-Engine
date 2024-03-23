@@ -1,11 +1,11 @@
 #pragma once
 
-#include "lve_window.hpp"
+#include "gui.hpp"
 #include "lve_device.hpp"
 #include "lve_swap_chain.hpp"
-#include "gui.hpp"
-#include "model.hpp"
 #include "lve_types.hpp"
+#include "lve_window.hpp"
+#include "model.hpp"
 #include "scene_manager.hpp"
 
 // std
@@ -13,29 +13,29 @@
 #include <vector>
 
 namespace lve {
-	class FirstApp {
-	public:
-		static constexpr int WIDTH = 1600;
-		static constexpr int HEIGHT = 900;
+class FirstApp {
+public:
+    static constexpr int WIDTH = 1600;
+    static constexpr int HEIGHT = 900;
 
-		FirstApp();
-		~FirstApp();
-		
-		FirstApp(const FirstApp&) = delete;
-		FirstApp& operator=(const FirstApp&) = delete;
-		void run();
+    FirstApp();
+    ~FirstApp();
 
-	private:
-		void createCommandBuffers();
-		void drawFrame();
+    FirstApp(const FirstApp &) = delete;
+    FirstApp &operator=(const FirstApp &) = delete;
+    void run();
 
-		LveWindow lveWindow{ WIDTH, HEIGHT, "Vulkan Renderer" };
-		LveDevice lveDevice{ lveWindow };
-		LveSwapChain lveSwapChain{ lveDevice, lveWindow.getExtent() };
-		LveGui lveGui { lveDevice, lveSwapChain, lveWindow };
-		std::vector<VkCommandBuffer> commandBuffers;
+private:
+    void createCommandBuffers();
+    void drawFrame();
 
-		ApplicationPipelines applicationPipelines;
-		std::unique_ptr<SceneManager> sceneManager;
-	};
-}
+    LveWindow lveWindow{WIDTH, HEIGHT, "Vulkan Renderer"};
+    LveDevice lveDevice{lveWindow};
+    LveSwapChain lveSwapChain{lveDevice, lveWindow.getExtent()};
+    LveGui lveGui{lveDevice, lveSwapChain, lveWindow};
+    std::vector<VkCommandBuffer> commandBuffers;
+
+    ApplicationPipelines applicationPipelines;
+    std::unique_ptr<SceneManager> sceneManager;
+};
+} // namespace lve
