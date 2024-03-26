@@ -19,7 +19,7 @@ namespace lve {
 FirstApp::FirstApp() {
     init::createPipelines(lveDevice.device(), &lveSwapChain, &applicationPipelines);
     init::createComputePipelines(lveDevice.device(), &lveSwapChain, &applicationPipelines);
-    sceneManager = std::make_unique<SceneManager>(lveDevice, applicationPipelines);
+    sceneManager = std::make_unique<SceneManager>(lveDevice, applicationPipelines, lveWindow.getWindow());
     createCommandBuffers();
 }
 
@@ -56,8 +56,7 @@ void FirstApp::createCommandBuffers() {
     allocInfo.commandPool = lveDevice.getCommandPool();
     allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 
-    if (vkAllocateCommandBuffers(lveDevice.device(), &allocInfo, commandBuffers.data()) !=
-        VK_SUCCESS) {
+    if (vkAllocateCommandBuffers(lveDevice.device(), &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
         throw std::runtime_error("failed to allocated command buffers");
     }
 }
@@ -80,22 +79,18 @@ void FirstApp::drawFrame() {
         throw std::runtime_error("failed to begin recording command buffer");
     }
 
-    sceneManager->getCurrentScene()->draw(commandBuffers[imageIndex], lveSwapChain, imageIndex,
-                                          lveSwapChain.getCurrentFrame());
+    sceneManager->getCurrentScene()->draw(commandBuffers[imageIndex], lveSwapChain, imageIndex, lveSwapChain.getCurrentFrame());
 
     lveGui.draw(commandBuffers[imageIndex], lveSwapChain.getImageView(imageIndex));
 
-    util::transitionImageLayout(commandBuffers[imageIndex], lveSwapChain.getImage(imageIndex),
-                                lveSwapChain.getSwapChainImageFormat(),
-                                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    util::transitionImageLayout(commandBuffers[imageIndex], lveSwapChain.getImage(imageIndex), lveSwapChain.getSwapChainImageFormat(),
+                                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
     if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS) {
         throw std::runtime_error("failed to record command buffer");
     }
 
-    sceneManager->getCurrentScene()->updateUniformBuffer(
-        lveSwapChain.getCurrentFrame(), lveSwapChain.width(), lveSwapChain.height());
+    sceneManager->getCurrentScene()->updateUniformBuffer(lveSwapChain.getCurrentFrame(), lveSwapChain.width(), lveSwapChain.height());
 
     result = lveSwapChain.submitCommandBuffers(&commandBuffers[imageIndex], &imageIndex);
     if (result != VK_SUCCESS) {

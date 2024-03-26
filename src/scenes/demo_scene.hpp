@@ -3,7 +3,7 @@
 namespace lve {
 class DemoScene : public IScene {
 public:
-    DemoScene(LveDevice &device, ApplicationPipelines &pipelines);
+    DemoScene(LveDevice &device, ApplicationPipelines &pipelines, GLFWwindow *window);
     ~DemoScene();
     void draw(VkCommandBuffer cmd, LveSwapChain &swapChain, int imageIndex, uint32_t currentFrame);
     void showSceneGui();

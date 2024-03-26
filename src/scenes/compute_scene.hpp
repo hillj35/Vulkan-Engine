@@ -3,7 +3,7 @@
 namespace lve {
 class ComputeScene : public IScene {
 public:
-    ComputeScene(LveDevice &device, ApplicationPipelines &pipelines);
+    ComputeScene(LveDevice &device, ApplicationPipelines &pipelines, GLFWwindow *window);
     ~ComputeScene();
     void initScene();
     void destroyScene();

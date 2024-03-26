@@ -5,8 +5,7 @@
 #include "../utility/images.hpp"
 
 namespace lve {
-ComputeScene::ComputeScene(LveDevice &device, ApplicationPipelines &pipelines)
-    : IScene{device, pipelines} {
+ComputeScene::ComputeScene(LveDevice &device, ApplicationPipelines &pipelines, GLFWwindow *window) : IScene{device, pipelines, window} {
     sceneName = "Compute Preview Scene";
     pushConstants.scale = 10.0f;
 }
@@ -30,8 +29,7 @@ void ComputeScene::destroyScene() {
 void ComputeScene::createComputeImages() {
     for (int i = 0; i < LveSwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
         AllocatedImage image;
-        init::createImage(&lveDevice, width, height, VK_FORMAT_B8G8R8A8_UNORM,
-                          VK_IMAGE_TILING_LINEAR,
+        init::createImage(&lveDevice, width, height, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_TILING_LINEAR,
                           VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, 0, image);
         computeImages.push_back(image);
     }
@@ -39,15 +37,13 @@ void ComputeScene::createComputeImages() {
 
 void ComputeScene::createDescriptorPool() {
     std::vector<VkDescriptorPoolSize> poolSizes{};
-    poolSizes.push_back({VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-                         static_cast<uint32_t>(LveSwapChain::MAX_FRAMES_IN_FLIGHT)});
+    poolSizes.push_back({VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, static_cast<uint32_t>(LveSwapChain::MAX_FRAMES_IN_FLIGHT)});
 
     descriptorAllocator.createDescriptorPool(poolSizes, 10);
 }
 
 void ComputeScene::createDescriptorSets() {
-    descriptorAllocator.allocateDescriptorSets(
-        pipelines.computePipelines.perlinNoisePipeline.descriptorSetLayout, computeDescriptorSets);
+    descriptorAllocator.allocateDescriptorSets(pipelines.computePipelines.perlinNoisePipeline.descriptorSetLayout, computeDescriptorSets);
 
     for (size_t i = 0; i < LveSwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imageInfo{};
@@ -65,52 +61,43 @@ void ComputeScene::createDescriptorSets() {
         imageWrite.pImageInfo = &imageInfo;
         descriptorWrites.push_back(imageWrite);
 
-        vkUpdateDescriptorSets(lveDevice.device(), static_cast<uint32_t>(descriptorWrites.size()),
-                               descriptorWrites.data(), 0, nullptr);
+        vkUpdateDescriptorSets(lveDevice.device(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
 }
 
-void ComputeScene::draw(VkCommandBuffer cmd, LveSwapChain &swapChain, int imageIndex,
-                        uint32_t currentFrame) {
-    util::transitionImageLayout(cmd, computeImages[currentFrame].image, VK_FORMAT_B8G8R8A8_UNORM,
-                                VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+void ComputeScene::draw(VkCommandBuffer cmd, LveSwapChain &swapChain, int imageIndex, uint32_t currentFrame) {
+    util::transitionImageLayout(cmd, computeImages[currentFrame].image, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
+                                VK_IMAGE_LAYOUT_GENERAL);
 
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE,
-                      pipelines.computePipelines.perlinNoisePipeline.pipeline);
-    vkCmdPushConstants(cmd, pipelines.computePipelines.perlinNoisePipeline.layout,
-                       VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(PerlinPushConstants), &pushConstants);
-    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE,
-                            pipelines.computePipelines.perlinNoisePipeline.layout, 0, 1,
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipelines.computePipelines.perlinNoisePipeline.pipeline);
+    vkCmdPushConstants(cmd, pipelines.computePipelines.perlinNoisePipeline.layout, VK_SHADER_STAGE_COMPUTE_BIT, 0,
+                       sizeof(PerlinPushConstants), &pushConstants);
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipelines.computePipelines.perlinNoisePipeline.layout, 0, 1,
                             &computeDescriptorSets[currentFrame], 0, nullptr);
     vkCmdDispatch(cmd, std::ceil(width / 16.0), std::ceil(height / 16.0), 1);
 
     // copy resulting image to swapchain image
-    util::transitionImageLayout(cmd, computeImages[currentFrame].image, VK_FORMAT_B8G8R8A8_UNORM,
-                                VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-    util::transitionImageLayout(cmd, swapChain.getImage(imageIndex),
-                                swapChain.getSwapChainImageFormat(), VK_IMAGE_LAYOUT_UNDEFINED,
+    util::transitionImageLayout(cmd, computeImages[currentFrame].image, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_LAYOUT_GENERAL,
+                                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    util::transitionImageLayout(cmd, swapChain.getImage(imageIndex), swapChain.getSwapChainImageFormat(), VK_IMAGE_LAYOUT_UNDEFINED,
                                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-    VkExtent2D srcExtent{.width = static_cast<uint32_t>(width),
-                         .height = static_cast<uint32_t>(height)};
+    VkExtent2D srcExtent{.width = static_cast<uint32_t>(width), .height = static_cast<uint32_t>(height)};
 
-    util::copyImageToImage(cmd, computeImages[currentFrame].image, swapChain.getImage(imageIndex),
-                           srcExtent, swapChain.getSwapChainExtent());
+    util::copyImageToImage(cmd, computeImages[currentFrame].image, swapChain.getImage(imageIndex), srcExtent,
+                           swapChain.getSwapChainExtent());
 
-    util::transitionImageLayout(cmd, computeImages[currentFrame].image, VK_FORMAT_B8G8R8A8_UNORM,
-                                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL);
-    util::transitionImageLayout(
-        cmd, swapChain.getImage(imageIndex), swapChain.getSwapChainImageFormat(),
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    util::transitionImageLayout(cmd, computeImages[currentFrame].image, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                VK_IMAGE_LAYOUT_GENERAL);
+    util::transitionImageLayout(cmd, swapChain.getImage(imageIndex), swapChain.getSwapChainImageFormat(),
+                                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 }
 
 void ComputeScene::showSceneGui() {
     ImGui::Begin("Perlin Noise Attributes");
     ImGui::DragFloat("Scale", (float *)&pushConstants.scale, 0.01f, 0.1f, FLT_MAX, "%.3f", 0);
-    ImGui::DragFloat("Offset X", (float *)&pushConstants.offset.x, 0.01f, FLT_MIN, FLT_MAX, "%.3f",
-                     0);
-    ImGui::DragFloat("Offset Y", (float *)&pushConstants.offset.y, 0.01f, FLT_MIN, FLT_MAX, "%.3f",
-                     0);
+    ImGui::DragFloat("Offset X", (float *)&pushConstants.offset.x, 0.01f, FLT_MIN, FLT_MAX, "%.3f", 0);
+    ImGui::DragFloat("Offset Y", (float *)&pushConstants.offset.y, 0.01f, FLT_MIN, FLT_MAX, "%.3f", 0);
     ImGui::End();
 }
 

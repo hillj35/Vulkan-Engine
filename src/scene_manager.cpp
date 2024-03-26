@@ -5,8 +5,8 @@
 #include "imgui.h"
 
 namespace lve {
-SceneManager::SceneManager(LveDevice &device, ApplicationPipelines &pipelines)
-    : device{device}, pipelines{pipelines} {
+SceneManager::SceneManager(LveDevice &device, ApplicationPipelines &pipelines, GLFWwindow *window)
+    : device{device}, pipelines{pipelines}, window{window} {
     initScenes();
 }
 
@@ -38,8 +38,8 @@ void SceneManager::showSceneSelectGui() {
 }
 
 void SceneManager::initScenes() {
-    scenes.push_back(std::make_shared<DemoScene>(device, pipelines));
-    scenes.push_back(std::make_shared<ComputeScene>(device, pipelines));
+    scenes.push_back(std::make_shared<DemoScene>(device, pipelines, window));
+    scenes.push_back(std::make_shared<ComputeScene>(device, pipelines, window));
     changeScene();
 }
 } // namespace lve
